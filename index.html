@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- SEO -->
+  <title>Bruno Touldor — Game Designer & Dev</title>
+  <meta name="description" content="Portfólio de Bruno Touldor — Game Designer indie com experiência em Unity e Godot, Python e JavaScript.">
+  <meta name="author" content="Bruno Touldor">
+  <meta name="keywords" content="game designer, game dev, unity, godot, python, indie, portfólio">
+
+  <!-- Open Graph -->
+  <meta property="og:type"        content="website">
+  <meta property="og:url"         content="https://seu-usuario.github.io">
+  <meta property="og:title"       content="Bruno Touldor — Game Designer & Dev">
+  <meta property="og:description" content="Criando mundos jogáveis e sistemas com propósito. Game designer indie com experiência em Unity, Godot, Python e JavaScript.">
+  <meta property="og:image"       content="https://seu-usuario.github.io/og-image.png">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card"        content="summary_large_image">
+  <meta name="twitter:title"       content="Bruno Touldor — Game Designer & Dev">
+  <meta name="twitter:description" content="Portfólio de game designer indie.">
+  <meta name="twitter:image"       content="https://seu-usuario.github.io/og-image.png">
+
+  <!-- Favicon pixel art roxo -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%23080c12'/><rect x='8' y='6' width='16' height='14' fill='%238b5cf6'/><rect x='6' y='8' width='4' height='4' fill='%238b5cf6'/><rect x='22' y='8' width='4' height='4' fill='%238b5cf6'/><rect x='8' y='20' width='6' height='8' fill='%238b5cf6'/><rect x='18' y='20' width='6' height='8' fill='%238b5cf6'/><rect x='11' y='10' width='3' height='3' fill='%23080c12'/><rect x='18' y='10' width='3' height='3' fill='%23080c12'/><rect x='12' y='15' width='8' height='2' fill='%2306b6d4'/></svg>">
+
+  <!-- Fontes -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&family=VT323&display=swap" rel="stylesheet">
+
+  <!-- Estilos -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="page">
+
+  <!-- NAV -->
+  <nav>
+    <div class="nav-logo">[<span>Bruno Touldor</span>]</div>
+    <ul class="nav-links">
+      <li><a href="#about">Sobre</a></li>
+      <li><a href="#games">Games</a></li>
+      <li><a href="#data">Dados</a></li>
+      <li><a href="#contact">Contato</a></li>
+    </ul>
+    <button class="nav-hamburger" aria-label="Abrir menu" aria-expanded="false" onclick="toggleMenu(this)">
+      <span></span><span></span><span></span>
+    </button>
+  </nav>
+
+  <!-- Drawer mobile -->
+  <div class="nav-mobile" id="nav-mobile">
+    <ul>
+      <li><a href="#about"   onclick="closeMenu()">Sobre</a></li>
+      <li><a href="#games"   onclick="closeMenu()">Games</a></li>
+      <li><a href="#data"    onclick="closeMenu()">Dados</a></li>
+      <li><a href="#contact" onclick="closeMenu()">Contato</a></li>
+    </ul>
+  </div>
+
+  <!-- HERO -->
+  <section id="hero">
+
+    <!-- Pixel art roxo + ciano -->
+    <svg class="pixel-deco" width="420" height="420" viewBox="0 0 100 100" aria-hidden="true">
+      <rect x="35" y="8"  width="30" height="26" fill="#8b5cf6"/>
+      <rect x="29" y="12" width="6"  height="8"  fill="#8b5cf6"/>
+      <rect x="65" y="12" width="6"  height="8"  fill="#8b5cf6"/>
+      <rect x="41" y="2"  width="4"  height="6"  fill="#06b6d4"/>
+      <rect x="55" y="2"  width="4"  height="6"  fill="#06b6d4"/>
+      <rect x="39" y="2"  width="8"  height="2"  fill="#06b6d4"/>
+      <rect x="53" y="2"  width="8"  height="2"  fill="#06b6d4"/>
+      <rect x="40" y="14" width="6"  height="6"  fill="#080c12"/>
+      <rect x="54" y="14" width="6"  height="6"  fill="#080c12"/>
+      <rect x="41" y="15" width="2"  height="2"  fill="#a78bfa"/>
+      <rect x="55" y="15" width="2"  height="2"  fill="#a78bfa"/>
+      <rect x="42" y="26" width="16" height="2"  fill="#080c12"/>
+      <rect x="40" y="24" width="4"  height="2"  fill="#080c12"/>
+      <rect x="56" y="24" width="4"  height="2"  fill="#080c12"/>
+      <rect x="33" y="34" width="34" height="32" fill="#8b5cf6"/>
+      <rect x="40" y="40" width="20" height="12" fill="#080c12"/>
+      <rect x="43" y="43" width="4"  height="6"  fill="#06b6d4"/>
+      <rect x="53" y="43" width="4"  height="6"  fill="#06b6d4"/>
+      <rect x="41" y="45" width="8"  height="2"  fill="#06b6d4"/>
+      <rect x="51" y="45" width="8"  height="2"  fill="#06b6d4"/>
+      <rect x="21" y="34" width="12" height="24" fill="#8b5cf6"/>
+      <rect x="67" y="34" width="12" height="24" fill="#8b5cf6"/>
+      <rect x="19" y="58" width="14" height="8"  fill="#8b5cf6"/>
+      <rect x="67" y="58" width="14" height="8"  fill="#8b5cf6"/>
+      <rect x="35" y="66" width="12" height="22" fill="#8b5cf6"/>
+      <rect x="53" y="66" width="12" height="22" fill="#8b5cf6"/>
+      <rect x="33" y="86" width="16" height="6"  fill="#8b5cf6"/>
+      <rect x="51" y="86" width="16" height="6"  fill="#8b5cf6"/>
+      <rect x="28" y="94" width="44" height="2"  fill="#8b5cf6" opacity="0.2"/>
+      <line x1="0"  y1="50" x2="100" y2="50" stroke="#06b6d4" stroke-width="0.4" opacity="0.3"/>
+      <line x1="50" y1="0"  x2="50"  y2="100" stroke="#06b6d4" stroke-width="0.4" opacity="0.3"/>
+    </svg>
+
+    <p class="hero-tag">Inicializando portfólio...</p>
+    <h1 class="hero-name">Bruno<br><span class="accent flicker">Touldor</span></h1>
+    <p class="hero-role">Game Designer & Dev<span class="cursor">_</span></p>
+    <p class="hero-desc">
+      Criando mundos jogáveis e sistemas com propósito. Game designer com experiência em
+      Unity e Godot, Python e JavaScript — onde design de jogos encontra ciência de dados.
+    </p>
+    <div class="hero-cta">
+      <a href="#games" class="btn-primary">Ver Projetos</a>
+      <a href="#contact" class="btn-outline">Entrar em Contato</a>
+    </div>
+
+    <div class="scroll-hint" aria-hidden="true">
+      <span>scroll</span>
+      <div class="scroll-arrow"></div>
+    </div>
+  </section>
+
+  <hr class="section-divider">
+
+  <!-- SOBRE -->
+  <section id="about">
+    <div class="section-header">
+      <span class="section-num">// 01 — sobre</span>
+      <h2 class="section-title">Quem sou</h2>
+    </div>
+
+    <div class="about-grid">
+      <div class="about-text">
+        <p>
+          Sou desenvolvedor indie focado em <strong>game design</strong> — na criação de sistemas,
+          mecânicas e experiências que fazem sentido para quem joga. Trabalho com Unity e Godot
+          para dar vida às ideias.
+        </p>
+        <p>
+          Do lado técnico, uso <strong>Python</strong> para análise de dados e automação, e
+          <strong>JavaScript</strong> para ferramentas web. Gosto de cruzar essas áreas: dados
+          informando design, e design humanizando dados.
+        </p>
+        <p>
+          Acredito que bons jogos nascem de <strong>iteração constante</strong>, de ouvir o
+          feedback e de nunca parar de testar.
+        </p>
+        <div class="tool-tags">
+          <span class="tag">Unity</span>
+          <span class="tag">Godot</span>
+          <span class="tag">Python</span>
+          <span class="tag">JavaScript</span>
+          <span class="tag">C#</span>
+          <span class="tag">GDScript</span>
+          <span class="tag">Figma</span>
+          <span class="tag">Tiled</span>
+        </div>
+      </div>
+
+      <div class="skills-panel">
+        <div class="skill-group">
+          <p class="skill-group-label">Game Development</p>
+          <div class="skill-chips">
+            <span class="skill-chip purple">Unity</span>
+            <span class="skill-chip purple">Godot</span>
+            <span class="skill-chip purple">C#</span>
+            <span class="skill-chip purple">GDScript</span>
+            <span class="skill-chip purple">Level Design</span>
+            <span class="skill-chip purple">Prototipagem</span>
+          </div>
+        </div>
+        <div class="skill-group">
+          <p class="skill-group-label">Dados & Código</p>
+          <div class="skill-chips">
+            <span class="skill-chip cyan">Python</span>
+            <span class="skill-chip cyan">Pandas</span>
+            <span class="skill-chip cyan">JavaScript</span>
+            <span class="skill-chip cyan">Node.js</span>
+            <span class="skill-chip cyan">Matplotlib</span>
+          </div>
+        </div>
+        <div class="skill-group">
+          <p class="skill-group-label">Design & Processo</p>
+          <div class="skill-chips">
+            <span class="skill-chip light">Figma</span>
+            <span class="skill-chip light">Notion</span>
+            <span class="skill-chip light">GDD</span>
+            <span class="skill-chip light">Playtesting</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="section-divider">
+
+  <!-- GAMES -->
+  <section id="games">
+    <div class="section-header">
+      <span class="section-num">// 02 — jogos</span>
+      <h2 class="section-title">Projetos de Games</h2>
+    </div>
+
+    <div class="project-grid">
+
+      <div class="project-card">
+        <div class="card-img-wrap">
+          <img src="https://placehold.co/600x300/0d0f1a/8b5cf6?text=screenshot+do+jogo" alt="Screenshot do projeto" class="card-img">
+          <span class="card-img-badge">jogo indie</span>
+        </div>
+        <div class="card-body">
+          <h3 class="card-title">Nome do Projeto</h3>
+          <p class="card-desc">
+            Descrição do seu jogo. Fale sobre o conceito, a mecânica central e o que o torna único.
+          </p>
+          <div class="card-tags">
+            <span class="card-tag">Unity</span>
+            <span class="card-tag">2D Platformer</span>
+            <span class="card-tag">Pixel Art</span>
+          </div>
+          <a href="#" class="card-link">Ver projeto</a>
+        </div>
+      </div>
+
+      <div class="project-card light-accent">
+        <div class="card-img-wrap">
+          <img src="https://placehold.co/600x300/0d0f1a/a78bfa?text=screenshot+do+jogo" alt="Screenshot do projeto" class="card-img">
+          <span class="card-img-badge light">game jam</span>
+        </div>
+        <div class="card-body">
+          <h3 class="card-title">Nome do Projeto</h3>
+          <p class="card-desc">
+            Descreva o gênero, a plataforma e o que você aprendeu desenvolvendo. Fale do loop de gameplay.
+          </p>
+          <div class="card-tags">
+            <span class="card-tag">Godot</span>
+            <span class="card-tag">Roguelite</span>
+            <span class="card-tag">GDScript</span>
+          </div>
+          <a href="#" class="card-link">Ver projeto</a>
+        </div>
+      </div>
+
+      <div class="project-card cyan-accent">
+        <div class="card-img-wrap">
+          <img src="https://placehold.co/600x300/0d0f1a/06b6d4?text=em+desenvolvimento" alt="Projeto em desenvolvimento" class="card-img">
+          <span class="card-img-badge cyan">em desenvolvimento</span>
+        </div>
+        <div class="card-body">
+          <h3 class="card-title">Projeto WIP</h3>
+          <p class="card-desc">
+            Projeto em andamento. Compartilhe a visão por trás dele e o que você está explorando.
+          </p>
+          <div class="card-tags">
+            <span class="card-tag">Unity</span>
+            <span class="card-tag">RPG</span>
+            <span class="card-tag">Procedural</span>
+          </div>
+          <a href="#" class="card-link">Acompanhar</a>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <hr class="section-divider">
+
+  <!-- DADOS -->
+  <section id="data">
+    <div class="section-header">
+      <span class="section-num">// 03 — dados & código</span>
+      <h2 class="section-title">Projetos Técnicos</h2>
+    </div>
+
+    <div class="project-grid">
+
+      <div class="project-card cyan-accent">
+        <div class="card-img-wrap">
+          <img src="https://placehold.co/600x300/0d0f1a/06b6d4?text=visualização+de+dados" alt="Projeto de dados" class="card-img">
+          <span class="card-img-badge cyan">data science</span>
+        </div>
+        <div class="card-body">
+          <h3 class="card-title">Nome do Projeto</h3>
+          <p class="card-desc">
+            Descreva a análise, o problema resolvido e os insights gerados.
+          </p>
+          <div class="card-tags">
+            <span class="card-tag cyan">Python</span>
+            <span class="card-tag cyan">Pandas</span>
+            <span class="card-tag cyan">Matplotlib</span>
+          </div>
+          <a href="#" class="card-link cyan">Ver projeto</a>
+        </div>
+      </div>
+
+      <div class="project-card">
+        <div class="card-img-wrap">
+          <img src="https://placehold.co/600x300/0d0f1a/8b5cf6?text=ferramenta+web" alt="Ferramenta web" class="card-img">
+          <span class="card-img-badge">ferramenta web</span>
+        </div>
+        <div class="card-body">
+          <h3 class="card-title">Nome do Projeto</h3>
+          <p class="card-desc">
+            Ferramenta ou script criado. Pode ser utilitário para game dev, bot ou gerador procedural.
+          </p>
+          <div class="card-tags">
+            <span class="card-tag cyan">JavaScript</span>
+            <span class="card-tag cyan">Node.js</span>
+            <span class="card-tag cyan">API</span>
+          </div>
+          <a href="#" class="card-link cyan">Ver projeto</a>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <hr class="section-divider">
+
+  <!-- CONTATO -->
+  <section id="contact">
+    <div class="section-header">
+      <span class="section-num">// 04 — contato</span>
+      <h2 class="section-title">Fale Comigo</h2>
+    </div>
+
+    <div class="contact-grid">
+      <div class="contact-text">
+        <p>
+          Aberto a colaborações em jogos indie, projetos criativos, freelance de game design
+          ou conversas sobre dados e código.
+        </p>
+        <div class="contact-links">
+          <a href="mailto:seu@email.com" class="contact-link">
+            <span class="contact-link-icon">✉️</span> seu@email.com
+          </a>
+          <a href="https://github.com/Brunosimoesorlandelli" class="contact-link" target="_blank" rel="noopener">
+            <span class="contact-link-icon">⌥</span> github.com/Brunosimoesorlandelli
+          </a>
+          <a href="https://touldor.itch.io/" class="contact-link" target="_blank" rel="noopener">
+            <span class="contact-link-icon">🕹️</span> itch.io/touldor
+          </a>
+          <a href="https://www.linkedin.com/in/bruno-simões-orlandelli-b089a2167" class="contact-link" target="_blank" rel="noopener">
+            <span class="contact-link-icon">👔</span> linkedin.com/in/bruno-simões-orlandelli
+          </a>
+          <a href="https://x.com/OrlandelliBruno" class="contact-link" target="_blank" rel="noopener">
+            <span class="contact-link-icon">🗙</span> x.com/OrlandelliBruno
+          </a>
+          <a href="https://www.instagram.com/brunoorlandelli96" class="contact-link" target="_blank" rel="noopener">
+            <span class="contact-link-icon">📸</span> instagram.com/brunoorlandelli96
+          </a>
+        </div>
+      </div>
+
+      <!--
+        FORMULÁRIO — Formspree (gratuito, sem backend)
+        1. Crie conta em formspree.io
+        2. Crie um Form e copie o endpoint gerado
+        3. Substitua "SEU_ENDPOINT" abaixo
+      -->
+      <form
+        class="contact-form"
+        action="https://formspree.io/f/SEU_ENDPOINT"
+        method="POST"
+        id="contact-form"
+        novalidate
+      >
+        <div class="form-group">
+          <label class="form-label" for="f-name">Nome</label>
+          <input type="text" id="f-name" name="name" class="form-input" placeholder="seu nome aqui" required autocomplete="name">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="f-email">E-mail</label>
+          <input type="email" id="f-email" name="email" class="form-input" placeholder="seu@email.com" required autocomplete="email">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="f-msg">Mensagem</label>
+          <textarea id="f-msg" name="message" class="form-textarea" placeholder="Olá, quero falar sobre..." required></textarea>
+        </div>
+        <p class="form-status" id="form-status" aria-live="polite"></p>
+        <button type="submit" class="btn-primary btn-submit">Enviar Mensagem</button>
+      </form>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <p>© 2026 <span>Bruno Touldor</span> — Desenvolvido a partir de 🥤 e muita 🎵</p>
+  </footer>
+
+</div>
+
+<!-- SCRIPTS -->
+<script>
+  /* ---- Menu mobile ---- */
+  function toggleMenu(btn) {
+    const menu = document.getElementById('nav-mobile');
+    const open = menu.classList.toggle('open');
+    btn.classList.toggle('active', open);
+    btn.setAttribute('aria-expanded', open);
+    document.body.style.overflow = open ? 'hidden' : '';
+  }
+
+  function closeMenu() {
+    const menu = document.getElementById('nav-mobile');
+    const btn  = document.querySelector('.nav-hamburger');
+    menu.classList.remove('open');
+    btn.classList.remove('active');
+    btn.setAttribute('aria-expanded', 'false');
+    document.body.style.overflow = '';
+  }
+
+  /* ---- Formulário Formspree (AJAX) ---- */
+  const form   = document.getElementById('contact-form');
+  const status = document.getElementById('form-status');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = form.querySelector('.btn-submit');
+    btn.textContent = 'Enviando...';
+    btn.disabled = true;
+    status.className = 'form-status';
+    status.textContent = '';
+
+    try {
+      const res = await fetch(form.action, {
+        method: 'POST',
+        body: new FormData(form),
+        headers: { 'Accept': 'application/json' }
+      });
+      if (res.ok) {
+        status.textContent = '✓ Mensagem enviada! Responderei em breve.';
+        status.className   = 'form-status success';
+        form.reset();
+      } else {
+        const data = await res.json();
+        throw new Error(data?.errors?.[0]?.message || 'Erro ao enviar.');
+      }
+    } catch (err) {
+      status.textContent = '✗ ' + err.message + ' Tente pelo e-mail diretamente.';
+      status.className   = 'form-status error';
+    } finally {
+      btn.textContent = 'Enviar Mensagem';
+      btn.disabled    = false;
+    }
+  });
+
+  /* ---- Fade-in ao rolar ---- */
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.1 });
+
+  document.querySelectorAll('.project-card, .skill-group, .contact-link').forEach(el => {
+    el.classList.add('fade-in');
+    observer.observe(el);
+  });
+</script>
+
+</body>
+</html>
