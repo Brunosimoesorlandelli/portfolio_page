@@ -761,12 +761,12 @@ section {
   height: 180px;
   object-fit: cover;
   transition: transform 0.4s;
-  filter: saturate(0.75) hue-rotate(190deg) contrast(1.05);
+  filter: saturate(0.75) contrast(1.05);
 }
 
 .project-card:hover .card-img {
   transform: scale(1.07);
-  filter: saturate(0.92) hue-rotate(190deg) contrast(1.1);
+  filter: saturate(0.92) contrast(1.1);
 }
 
 /* Badge sobre a imagem */
