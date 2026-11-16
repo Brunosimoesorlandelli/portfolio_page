@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Calculadora financeira</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0f1720;--card:#17222e;--line:#2a3846;--tx:#e8eef4;--mut:#93a3b3;--bal:#e8b04a;--inv:#6fa8dc;--field:#0f1720;color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+:root[data-theme="light"]{--bg:#eef2f6;--card:#ffffff;--line:#d3dce5;--tx:#13202d;--mut:#586878;--bal:#b9770e;--inv:#2f6fb0;--field:#f6f9fc;color-scheme:light}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--tx);font:400 16px/1.5 "IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;font-variant-numeric:tabular-nums}
+.wrap{max-width:1040px;margin:0 auto;padding:28px 20px 48px}
+header{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:28px}
+h1{margin:0 0 4px;font-size:1.6rem;font-weight:600;letter-spacing:-.01em}
+header p{margin:0;color:var(--mut);max-width:52ch}
+button.theme{background:var(--card);color:var(--tx);border:1px solid var(--line);border-radius:8px;padding:8px 12px;font:inherit;font-size:.9rem;cursor:pointer;white-space:nowrap}
+button.theme:hover{border-color:var(--mut)}
+:focus-visible{outline:2px solid var(--bal);outline-offset:2px}
+[hidden]{display:none!important}
+.tabs{display:flex;gap:4px;margin-bottom:20px;border-bottom:1px solid var(--line)}
+.tabs button{background:none;border:0;border-bottom:2px solid transparent;color:var(--mut);padding:10px 14px;margin-bottom:-1px;font:inherit;cursor:pointer}
+.tabs button[aria-selected="true"]{color:var(--tx);border-bottom-color:var(--bal)}
+.grid{display:grid;grid-template-columns:300px 1fr;gap:20px;align-items:start}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:20px}
+.fields{display:grid;gap:16px}
+label{display:block;font-size:.9rem;color:var(--mut);margin-bottom:6px}
+.row{display:flex;gap:8px}
+input,select{width:100%;background:var(--field);color:var(--tx);border:1px solid var(--line);border-radius:8px;padding:10px 12px;font:inherit}
+select{width:auto;flex:0 0 auto}
+input:hover,select:hover{border-color:var(--mut)}
+.big{margin:0 0 20px}
+.big span{display:block;color:var(--mut);font-size:.95rem}
+.big strong{display:block;font-size:clamp(2rem,6vw,3rem);font-weight:600;letter-spacing:-.02em;color:var(--bal);line-height:1.15}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px}
+.stat{border-left:3px solid var(--line);padding-left:12px}
+.stat.i{border-color:var(--inv)}.stat.j{border-color:var(--bal)}
+.stat span{display:block;color:var(--mut);font-size:.85rem}
+.stat b{font-weight:600;font-size:1.1rem}
+.chart{position:relative}
+svg{display:block;width:100%;height:auto;touch-action:pan-y}
+.ax{stroke:var(--line);stroke-width:1}
+.tk{fill:var(--mut);font-size:11px}
+.lb{fill:none;stroke:var(--bal);stroke-width:2.5}
+.li{fill:none;stroke:var(--inv);stroke-width:2;stroke-dasharray:5 4}
+.ar{fill:var(--bal);opacity:.12}
+.legend{display:flex;gap:18px;font-size:.85rem;color:var(--mut);margin-top:8px}
+.legend i{display:inline-block;width:14px;height:3px;margin-right:6px;vertical-align:middle;background:var(--bal)}
+.legend i.d{background:var(--inv)}
+.tip{position:absolute;top:8px;pointer-events:none;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:.82rem;line-height:1.45;min-width:170px;display:none}
+.tip b{display:block;margin-bottom:2px}
+.note{margin:16px 0 0;color:var(--mut);font-size:.82rem}
+@media (max-width:820px){.grid{grid-template-columns:1fr}.wrap{padding:20px 16px 40px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Calculadora financeira</h1>
+      <p>Simule investimentos com juros compostos ou financiamentos nos sistemas Price e SAC. O resultado atualiza enquanto você digita.</p>
+    </div>
+    <button class="theme" id="theme" type="button">Tema claro</button>
+  </header>
+
+  <div class="tabs" role="tablist"><button type="button" role="tab" id="t-juros" aria-selected="true">Juros compostos</button><button type="button" role="tab" id="t-fin" aria-selected="false">Financiamento</button></div>
+  <div class="grid">
+    <section class="panel" aria-label="Parâmetros">
+      <div class="fields" id="f-juros">
+        <div><label for="v0">Valor inicial (R$)</label><input id="v0" type="number" inputmode="decimal" min="0" step="100" value="5000"></div>
+        <div><label for="ap">Aporte mensal (R$)</label><input id="ap" type="number" inputmode="decimal" min="0" step="50" value="500"></div>
+        <div><label for="tx">Taxa de juros</label>
+          <div class="row"><input id="tx" type="number" inputmode="decimal" min="0" step="0.1" value="10.5">
+          <select id="txu" aria-label="Período da taxa"><option value="a">% ao ano</option><option value="m">% ao mês</option></select></div></div>
+        <div><label for="n">Prazo</label>
+          <div class="row"><input id="n" type="number" inputmode="numeric" min="1" step="1" value="10">
+          <select id="nu" aria-label="Unidade do prazo"><option value="a">anos</option><option value="m">meses</option></select></div></div>
+      </div>
+      <div class="fields" id="f-fin" hidden>
+        <div><label for="fv">Valor financiado (R$)</label><input id="fv" type="number" inputmode="decimal" min="0" step="1000" value="250000"></div>
+        <div><label for="ftx">Taxa de juros</label>
+          <div class="row"><input id="ftx" type="number" inputmode="decimal" min="0" step="0.1" value="11">
+          <select id="ftxu" aria-label="Período da taxa"><option value="a">% ao ano</option><option value="m">% ao mês</option></select></div></div>
+        <div><label for="fn">Prazo</label>
+          <div class="row"><input id="fn" type="number" inputmode="numeric" min="1" step="1" value="30">
+          <select id="fnu" aria-label="Unidade do prazo"><option value="a">anos</option><option value="m">meses</option></select></div></div>
+        <div><label for="fs">Sistema de amortização</label>
+          <select id="fs" style="width:100%"><option value="price">Price (parcelas fixas)</option><option value="sac">SAC (parcelas decrescentes)</option></select></div>
+      </div>
+    </section>
+
+    <section class="panel" aria-live="polite">
+      <p class="big"><span id="l1">Saldo final</span><strong id="fin">R$ 0,00</strong></p>
+      <div class="stats">
+        <div class="stat i"><span id="l2">Total investido</span><b id="inv">R$ 0,00</b></div>
+        <div class="stat j"><span id="l3">Juros ganhos</span><b id="jur">R$ 0,00</b></div>
+        <div class="stat" id="s3" hidden><span>Última parcela</span><b id="v3">R$ 0,00</b></div>
+      </div>
+      <div class="chart" id="chart">
+        <svg id="svg" viewBox="0 0 700 320" role="img" aria-label="Evolução do saldo e do total investido ao longo do tempo"></svg>
+        <div class="tip" id="tip"></div>
+      </div>
+      <div class="legend"><span><i></i><span id="lg1">Saldo com juros</span></span><span><i class="d"></i><span id="lg2">Total investido</span></span></div>
+      <p class="note" id="note"></p>
+    </section>
+  </div>
+</div>
+
+<script>
+(function(){
+  var $ = function(id){return document.getElementById(id)};
+  var brl = new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'});
+  var cmp = new Intl.NumberFormat('pt-BR',{notation:'compact',maximumFractionDigits:1});
+  var W=700,H=320,L=56,R=14,T=14,B=30, pts=[], months=0, maxVal=0, mode='juros';
+
+  function setText(id,t){$(id).textContent=t}
+
+  function labels(){
+    var j=mode==='juros', sac=$('fs').value==='sac';
+    setText('l1',j?'Saldo final':sac?'Primeira parcela':'Parcela mensal');
+    setText('l2',j?'Total investido':'Total pago');
+    setText('l3',j?'Juros ganhos':'Juros pagos');
+    setText('lg1',j?'Saldo com juros':'Total pago até o mês');
+    setText('lg2',j?'Total investido':'Saldo devedor');
+    setText('note',j?'Aportes feitos no fim de cada mês. Sem impostos, taxas ou inflação.':'Parcelas mensais, sem seguros, tarifas ou correção monetária. Price: parcelas fixas. SAC: amortização constante, parcelas decrescentes.');
+    $('f-juros').hidden=!j; $('f-fin').hidden=j; $('s3').hidden=j;
+    $('t-juros').setAttribute('aria-selected',j);
+    $('t-fin').setAttribute('aria-selected',!j);
+  }
+
+  function calcJuros(){
+    var v0=Math.max(0,+$('v0').value||0), ap=Math.max(0,+$('ap').value||0),
+        tx=Math.max(0,+$('tx').value||0)/100, n=Math.max(0,+$('n').value||0);
+    months=Math.min(Math.round($('nu').value==='a'?n*12:n),1200);
+    var i=$('txu').value==='a'?Math.pow(1+tx,1/12)-1:tx;
+    var bal=v0, inv=v0; pts=[{m:0,a:bal,b:inv}];
+    for(var m=1;m<=months;m++){bal=bal*(1+i)+ap;inv+=ap;pts.push({m:m,a:bal,b:inv});}
+    var last=pts[pts.length-1]; maxVal=last.a;
+    setText('fin',brl.format(last.a));
+    setText('inv',brl.format(last.b));
+    setText('jur',brl.format(last.a-last.b));
+  }
+
+  function calcFin(){
+    var pv=Math.max(0,+$('fv').value||0), tx=Math.max(0,+$('ftx').value||0)/100, n=Math.max(0,+$('fn').value||0);
+    months=Math.min(Math.round($('fnu').value==='a'?n*12:n),600);
+    var i=$('ftxu').value==='a'?Math.pow(1+tx,1/12)-1:tx, sac=$('fs').value==='sac';
+    var debt=pv, paid=0, first=0, lastP=0; pts=[{m:0,a:0,b:debt}];
+    if(months>=1){
+      var price=i>0?pv*i/(1-Math.pow(1+i,-months)):pv/months;
+      for(var m=1;m<=months;m++){
+        var jur=debt*i, amort=sac?pv/months:price-jur, p=amort+jur;
+        debt=Math.max(0,debt-amort); paid+=p; lastP=p; if(m===1) first=p;
+        pts.push({m:m,a:paid,b:debt});
+      }
+    }
+    maxVal=Math.max(paid,pv);
+    setText('fin',brl.format(first));
+    setText('inv',brl.format(paid));
+    setText('jur',brl.format(paid-pv));
+    setText('v3',brl.format(lastP));
+  }
+
+  function calc(){ if(mode==='juros') calcJuros(); else calcFin(); draw(); }
+
+  function tipRows(p){
+    return mode==='juros'
+      ?'Saldo: '+brl.format(p.a)+'<br>Investido: '+brl.format(p.b)+'<br>Juros: '+brl.format(p.a-p.b)
+      :'Total pago: '+brl.format(p.a)+'<br>Saldo devedor: '+brl.format(p.b);
+  }
+
+  function label(m){
+    if(m<24) return m+(m===1?' mês':' meses');
+    var y=Math.round(m/12*10)/10; return String(y).replace('.',',')+' anos';
+  }
+
+  function draw(){
+    var svg=$('svg'); $('tip').style.display='none';
+    if(months<1){svg.innerHTML='';return;}
+    var max=maxVal||1, pw=W-L-R, ph=H-T-B;
+    var x=function(m){return L+m/months*pw}, y=function(v){return T+(1-v/max)*ph};
+    var g='';
+    for(var k=0;k<=4;k++){
+      var v=max*k/4, yy=y(v);
+      g+='<line class="ax" x1="'+L+'" x2="'+(W-R)+'" y1="'+yy+'" y2="'+yy+'"/>';
+      g+='<text class="tk" x="'+(L-8)+'" y="'+(yy+4)+'" text-anchor="end">'+cmp.format(v)+'</text>';
+    }
+    for(var j=0;j<=4;j++){
+      var m=Math.round(months*j/4);
+      g+='<text class="tk" x="'+x(m)+'" y="'+(H-8)+'" text-anchor="'+(j===0?'start':j===4?'end':'middle')+'">'+label(m)+'</text>';
+    }
+    var lb='',li='';
+    pts.forEach(function(p,idx){
+      lb+=(idx?'L':'M')+x(p.m).toFixed(1)+' '+y(p.a).toFixed(1);
+      li+=(idx?'L':'M')+x(p.m).toFixed(1)+' '+y(p.b).toFixed(1);
+    });
+    g+='<path class="ar" d="'+lb+' L'+x(months)+' '+y(0)+' L'+x(0)+' '+y(0)+'Z"/>';
+    g+='<path class="li" d="'+li+'"/><path class="lb" d="'+lb+'"/>';
+    g+='<g id="hov" style="display:none"><line id="hl" class="ax" y1="'+T+'" y2="'+(T+ph)+'"/><circle id="hc" r="4.5" fill="var(--bal)"/></g>';
+    svg.innerHTML=g;
+  }
+
+  function hover(e){
+    if(months<1) return;
+    var svg=$('svg'), r=svg.getBoundingClientRect();
+    var px=(e.clientX-r.left)/r.width*W;
+    var m=Math.max(0,Math.min(months,Math.round((px-L)/(W-L-R)*months)));
+    var p=pts[m], max=maxVal||1;
+    var cx=L+m/months*(W-L-R), cy=T+(1-p.a/max)*(H-T-B);
+    var hov=$('hov'); hov.style.display='';
+    $('hl').setAttribute('x1',cx); $('hl').setAttribute('x2',cx);
+    $('hc').setAttribute('cx',cx); $('hc').setAttribute('cy',cy);
+    var tip=$('tip'); tip.style.display='block';
+    tip.innerHTML='<b>'+label(m)+'</b>'+tipRows(p);
+    var w=$('chart').clientWidth, tw=tip.offsetWidth, left=cx/W*w+12;
+    if(left+tw>w) left=cx/W*w-tw-12;
+    tip.style.left=Math.max(0,left)+'px';
+  }
+  function leave(){var h=$('hov'),t=$('tip'); if(h)h.style.display='none'; t.style.display='none';}
+
+  var svg=$('svg');
+  svg.addEventListener('pointermove',hover);
+  svg.addEventListener('pointerdown',hover);
+  svg.addEventListener('pointerleave',leave);
+  ['v0','ap','tx','n','fv','ftx','fn'].forEach(function(id){$(id).addEventListener('input',calc)});
+  ['txu','nu','ftxu','fnu'].forEach(function(id){$(id).addEventListener('change',calc)});
+  $('fs').addEventListener('change',function(){labels();calc();});
+  ['t-juros','t-fin'].forEach(function(id){
+    $(id).addEventListener('click',function(){mode=id==='t-fin'?'fin':'juros';labels();calc();});
+  });
+
+  function setTheme(t){
+    document.documentElement.setAttribute('data-theme',t);
+    $('theme').textContent=t==='dark'?'Tema claro':'Tema escuro';
+  }
+  $('theme').addEventListener('click',function(){
+    var t=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';
+    setTheme(t);
+    try{localStorage.setItem('theme',t)}catch(e){}
+  });
+  try{var s=localStorage.getItem('theme'); if(s==='light'||s==='dark') setTheme(s);}catch(e){}
+
+  labels(); calc();
+})();
+</script>
+</body>
+</html>
