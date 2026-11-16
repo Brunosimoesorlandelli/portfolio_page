@@ -59,8 +59,13 @@ label{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:15px
 input[type=range]{accent-color:var(--accent);width:130px}
 select,input[type=number]{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
 input[type=number]{width:76px}
-.info{display:grid;grid-template-columns:1.3fr 1fr;gap:40px;margin:56px 0 80px;padding-top:40px;border-top:1px solid var(--line)}
-.info h2{font:700 28px/1.15 var(--head);letter-spacing:-.02em}
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:28px;align-items:start;margin-bottom:72px}
+.info{position:sticky;top:calc(76px + env(safe-area-inset-top,0px));max-height:calc(100vh - 96px);overflow:auto;border:1px solid var(--line);border-radius:20px;background:var(--surface);padding:22px}
+.info h3{font:700 15px var(--head);margin:22px 0 8px}
+.info ol,.info ul{color:var(--muted);padding-left:20px;font-size:15px}.info li+li{margin-top:6px}
+.info dl{margin-top:18px;padding-top:16px;border-top:1px solid var(--line);gap:8px 16px}.info dd{font-size:15px}
+@media (max-width:1000px){.layout{grid-template-columns:1fr}.info{position:static;max-height:none}}
+.info h2{font:700 22px/1.15 var(--head);letter-spacing:-.02em}
 .info p{color:var(--muted);margin-top:12px;max-width:56ch}
 dl{display:grid;grid-template-columns:auto 1fr;gap:10px 24px;align-content:start}
 dt{color:var(--muted)}dd{font:700 17px var(--head)}
@@ -93,6 +98,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
     <div class="chips" id="chips" role="group" aria-label="Algoritmo"></div>
   </div>
 
+  <div class="layout"><div class="col">
   <div class="stage">
     <canvas id="cv" role="img" aria-label="Barras que representam o array sendo processado"></canvas>
     <div class="legend" id="legend"></div>
@@ -118,11 +124,11 @@ footer .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
     <label id="tgWrap" class="hide">Alvo <input id="target" type="number" min="1" value="1"><button class="btn" id="rndT" type="button">Sortear</button></label>
   </div>
 
-  <section class="info">
+  </div><section class="info" aria-label="Sobre o algoritmo selecionado">
     <div><h2 id="iName"></h2><p id="iDesc"></p></div>
-    <dl id="iDl"></dl>
+    <dl id="iDl"></dl><div id="iMore"></div>
   </section>
-</main>
+</div></main>
 <footer><div class="wrap"><span>© 2026 Bruno Simões Orlandelli</span><span>Espaço inicia e pausa a animação.</span></div></footer>
 
 <script>
@@ -176,6 +182,12 @@ function* dijkstra(G,s,t){var n=G.n,d=[],par=[],dn=[],i;for(i=0;i<n;i++)d[i]=Inf
     dn[u]=1;yield GV(u);if(u===t)break;
     for(var k=0;k<G.adj[u].length;k++){var v=G.adj[u][k][0],w=G.adj[u][k][1];yield GE(u,v);if(!dn[v]&&d[u]+w<d[v]){d[v]=d[u]+w;par[v]=u;yield GQ(v,u,d[v])}}}
   var p=dn[t]?trace(par,s,t):null;yield p?{t:'path',p:p,c:d[t]}:NF}
+function* astar(G,s,t){var n=G.n,g=[],par=[],cl=[],op=[],i;for(i=0;i<n;i++)g[i]=Infinity;g[s]=0;op[s]=1;yield GQ(s,undefined,Math.round(G.hf(s,t)));
+  for(;;){var u=-1,fu=0;for(i=0;i<n;i++)if(op[i]){var f=g[i]+G.hf(i,t);if(u<0||f<fu){u=i;fu=f}}if(u<0)break;
+    op[u]=0;cl[u]=1;yield GV(u);if(u===t)break;
+    for(var k=0;k<G.adj[u].length;k++){var v=G.adj[u][k][0],w=G.adj[u][k][1];yield GE(u,v);
+      if(g[u]+w<g[v]){g[v]=g[u]+w;par[v]=u;op[v]=1;yield GQ(v,u,Math.round(g[v]+G.hf(v,t)))}}}
+  var p=cl[t]?trace(par,s,t):null;yield p?{t:'path',p:p,c:g[t]}:NF}
 function* prim(G,s){var tr=[],cnt=1;tr[s]=1;yield GQ(s);yield GV(s);
   while(cnt<G.n){var best=null;for(var k=0;k<G.E.length;k++){var e=G.E[k];if(!!tr[e[0]]===!!tr[e[1]])continue;yield GE(e[0],e[1]);if(!best||e[2]<best[2])best=e}
     if(!best)break;var v=tr[best[0]]?best[1]:best[0],u=v===best[0]?best[1]:best[0];tr[v]=1;cnt++;yield{t:'m',u:u,v:v,w:best[2]};yield GV(v)}
@@ -198,9 +210,27 @@ var ALGS={
   bfs:{n:'BFS (largura)',g:bfs,d:'Explora o grafo em camadas, dos nós mais próximos da origem para os mais distantes, usando uma fila. Por isso acha o caminho com menos arestas.',a:'O(V + E)',s:'O(V)',o:'Menor caminho em número de arestas',r:'Nenhum'},
   dfs:{n:'DFS (profundidade)',g:dfs,d:'Segue por um caminho até o fim e só volta quando trava. Visita o grafo todo, mas o caminho que encontra pode ser bem longo.',a:'O(V + E)',s:'O(V)',o:'Um caminho, nem sempre o menor',r:'Nenhum'},
   dijkstra:{n:'Dijkstra',g:dijkstra,wt:true,d:'Sempre visita o nó descoberto mais perto da origem e atualiza seus vizinhos. Os números ao lado dos nós mostram a melhor distância conhecida.',a:'O((V + E) log V)',s:'O(V)',o:'Menor caminho em custo',r:'Pesos não negativos'},
+  astar:{n:'A*',g:astar,wt:true,d:'Como o Dijkstra, mas prioriza nós que parecem mais perto do destino: soma o custo até ali (g) a uma estimativa em linha reta (h). O número sobre cada nó é f = g + h. A estimativa nunca superestima, então o caminho é o menor, e costuma visitar bem menos nós.',a:'Depende da heurística',s:'O(V)',o:'Menor caminho em custo',r:'Destino conhecido e heurística admissível'},
   prim:{n:'Prim (árvore mínima)',g:prim,wt:true,d:'Parte de um nó e adiciona sempre a aresta mais barata que liga a árvore a um nó novo, até cobrir o grafo inteiro.',a:'O(E log V)',s:'O(V)',o:'Árvore geradora de custo mínimo',r:'Grafo conexo'}}
 };
 
+var EXTRA={
+ bubble:[['Compara dois vizinhos e troca se estiverem fora de ordem.','Repete até o fim do trecho: o maior valor “sobe” como uma bolha.','Cada passada deixa mais um valor no lugar. Se uma passada não trocar nada, o array já está ordenado.'],'Os maiores valores se acumulam à direita, um por passada.',['Ensino de lógica: é o primeiro algoritmo que quase todo mundo aprende.','Listas minúsculas ou quase ordenadas, onde a simplicidade vale mais que a velocidade.','Raramente é usado em produção, porque o custo O(n²) pesa rápido.']],
+ selection:[['Procura o menor valor entre os que ainda não foram ordenados.','Troca esse valor com o da primeira posição livre.','Avança uma posição e repete.'],'O contador de trocas fica baixo (no máximo n − 1), mesmo com muitas comparações.',['Quando escrever na memória é caro, como em memória flash, porque faz poucas trocas.','Ordenar poucos itens em sistemas embarcados simples.','Escolher o melhor candidato de cada rodada, como num ranking pequeno.']],
+ insertion:[['Considera o primeiro elemento como já ordenado.','Pega o próximo e o desliza para a esquerda até achar seu lugar.','Repete até o fim: a parte ordenada cresce um item por vez.'],'Teste a entrada “Quase ordenada”: quase não há trocas. Na “Invertida” está o pior caso.',['Organizar cartas na mão, que é exatamente o que as pessoas fazem.','Dentro de algoritmos maiores, como o Timsort (Python, Java), para trechos pequenos.','Dados que chegam aos poucos e precisam se manter ordenados.']],
+ merge:[['Divide o array ao meio, várias vezes, até sobrar um elemento só.','Intercala duas metades já ordenadas, sempre pegando o menor entre as duas frentes.','Sobe juntando os pedaços até formar o array inteiro.'],'Ele escreve valores em vez de trocar (veja “Trocas e escritas”). O tempo é quase igual em qualquer entrada.',['Ordenar arquivos enormes que não cabem na memória, como em bancos de dados.','Ordenação estável: mantém a ordem original de itens iguais, útil para ordenar tabelas por várias colunas.','Base do Timsort, usado em Python e Java.']],
+ quick:[['Escolhe um pivô (aqui, o último elemento).','Move os menores para a esquerda e os maiores para a direita. O pivô cai na posição final.','Repete nos dois lados, de forma independente.'],'O pivô fica amarelo. Na entrada “Invertida”, o pivô ruim mostra o pior caso O(n²).',['Ordenação padrão em muitas bibliotecas, em variantes como o introsort do C++.','Ordenar dados em memória com pouca memória extra.','A mesma ideia de particionar resolve “qual é o k-ésimo maior?” (quickselect).']],
+ heap:[['Reorganiza o array como um heap máximo: cada pai é maior que seus filhos.','Troca a raiz (o maior valor) com o último elemento e o tira do heap.','Reajusta o heap e repete até esvaziá-lo.'],'As comparações são entre pais e filhos, por isso os saltos parecem espalhados. O final é preenchido da direita para a esquerda.',['Filas de prioridade: escalonar tarefas do sistema operacional e eventos em simuladores.','Quando é preciso garantir O(n log n) com quase nenhuma memória extra.','Plano B do introsort quando o quicksort degenera.']],
+ linear:[['Começa na primeira posição.','Compara cada elemento com o alvo.','Para ao achar, ou conclui que não existe depois de olhar tudo.'],'Quando o alvo não existe, ele percorre todas as posições.',['Procurar um contato numa lista curta e sem ordem.','Achar uma carta específica num monte embaralhado.','Qualquer coleção sem ordem em que não vale a pena ordenar antes.']],
+ binary:[['Olha o elemento do meio da faixa de busca.','Se for o alvo, terminou. Se o alvo for menor, descarta a metade direita. Se for maior, descarta a esquerda.','Repete na metade que sobrou, até achar ou a faixa acabar.'],'As barras apagadas são as faixas descartadas. Aumente o tamanho para 120: continua levando poucas comparações.',['Procurar uma palavra no dicionário, abrindo sempre no meio.','Bancos de dados e índices de busca usam variações dela, como as árvores B.','git bisect: acha o commit que causou um bug dividindo o histórico ao meio.']],
+ jump:[['Pula de √n em √n posições, olhando só o final de cada bloco.','Quando o valor do bloco passa do alvo, para de pular.','Varre esse último bloco com busca linear.'],'Duas fases: saltos regulares e depois uma varredura curta no bloco certo.',['Quando voltar atrás é caro, como em fitas ou arquivos sequenciais: ele só retrocede um bloco.','Listas ordenadas em que a busca binária é difícil de usar, mas a linear é lenta demais.','Ideia parecida com a dos índices esparsos de bancos de dados.']],
+ interp:[['Estima onde o alvo deveria estar, proporcionalmente aos valores nas pontas da faixa.','Compara nessa posição e estreita a faixa para um dos lados.','Repete com a nova estimativa.'],'Com valores bem distribuídos, o palpite cai perto do alvo logo de cara. Se os valores crescem de forma muito irregular, ele perde a vantagem.',['Procurar no dicionário: você abre perto do fim para “zebra” e perto do começo para “abelha”.','Tabelas numéricas grandes e uniformes, como IDs ou datas em ordem.','Consultas em bancos de dados com chaves numéricas bem distribuídas.']],
+ bfs:[['Põe a origem numa fila.','Tira o primeiro da fila, visita-o e coloca na fila seus vizinhos ainda não vistos.','Repete: os nós são visitados por distância crescente, camada por camada.'],'A fila se espalha como uma onda a partir da origem. O caminho final tem o menor número de arestas.',['Redes sociais: amigos de amigos e o grau de separação entre duas pessoas.','Jogos e labirintos em grade, quando todos os passos têm o mesmo custo.','Rastreadores de páginas web (crawlers) que seguem links por camadas.']],
+ dfs:[['Visita um nó e vai para um vizinho ainda não visto.','Segue assim o mais fundo possível.','Ao ficar sem saída, volta atrás (backtracking) e tenta outro vizinho.'],'Ele mergulha por um caminho antes de olhar os outros, então o caminho final costuma ser mais longo que o do BFS.',['Gerar e resolver labirintos e puzzles como o sudoku.','Detectar ciclos e ordenar tarefas com dependências (ordenação topológica), como na ordem de compilação.','Verificar se uma rede está conectada ou achar seus componentes.']],
+ dijkstra:[['Dá distância 0 à origem e infinita aos outros nós.','Visita o nó não visitado com a menor distância conhecida.','Atualiza os vizinhos se passar por ele for mais barato, e repete.'],'Os números sobre os nós diminuem quando um caminho melhor é achado, e as arestas roxas trocam de “pai” ao longo do tempo.',['GPS e apps de mapas: rota mais curta ou mais rápida entre dois pontos.','Roteamento de pacotes na internet (protocolo OSPF).','Jogos de estratégia, com custo de movimento diferente por terreno.']],
+ astar:[['Como no Dijkstra, ordena os nós por f = g + h.','g é o custo já percorrido e h é a estimativa em linha reta até o destino.','Isso empurra a busca em direção ao destino, em vez de se espalhar para todos os lados.'],'Compare com o Dijkstra no mesmo grafo: o A* costuma visitar menos nós e chega ao mesmo custo.',['IA de personagens em jogos: pathfinding em mapas e grades.','Robôs e carros autônomos planejando rotas.','Apps de mapas, usando a distância geográfica como estimativa.']],
+ prim:[['Começa com um único nó na árvore.','Entre todas as arestas que ligam a árvore a um nó de fora, escolhe a mais barata.','Adiciona o nó novo e repete até ligar todos.'],'As arestas roxas formam a árvore. A cada rodada ele examina as arestas candidatas e escolhe a de menor peso.',['Projetar redes de cabos, fibra óptica ou tubulações com o menor custo total.','Agrupamento de dados (clustering) e segmentação de imagens.','Gerar labirintos aleatórios, com variações do algoritmo.']]
+};
 var S={mode:'sort',algo:'bubble',a:[],orig:[],gen:null,running:false,finished:false,acc:0,wave:-2,
   cmp:0,swp:0,hc:[],hs:[],hd:[],done:[],pivot:-1,lo:-1,hi:-1,found:-1,nf:false,target:1,max:1,
   G:null,start:0,pick:false,pos:null,fr:[],tree:{},eh:{},lab:[],par:[],path:{},pn:[],total:0,cost:undefined,mst:false};
@@ -230,14 +260,14 @@ function makeGraph(n){
     if(ok){x.push(px);y.push(py)}else if(++tr%30===0)md*=.9}
   function dd(a,b){return Math.hypot((x[a]-x[b])*asp,y[a]-y[b])}
   function fd(a){return par[a]===a?a:(par[a]=fd(par[a]))}
-  function add(a,b){var k=ek(a,b);if(seen[k])return;seen[k]=1;E.push([Math.min(a,b),Math.max(a,b),Math.max(1,Math.round(dd(a,b)*10))]);par[fd(a)]=fd(b)}
+  function add(a,b){var k=ek(a,b);if(seen[k])return;seen[k]=1;E.push([Math.min(a,b),Math.max(a,b),Math.max(1,Math.ceil(dd(a,b)*10))]);par[fd(a)]=fd(b)}
   for(i=0;i<n;i++)par[i]=i;
   for(i=0;i<n;i++){var o=[];for(j=0;j<n;j++)if(j!==i)o.push(j);o.sort(function(a,b){return dd(i,a)-dd(i,b)});add(i,o[0]);if(o.length>1&&Math.random()<.7)add(i,o[1])}
   for(;;){var bd=1e9,ba=-1,bb=-1;for(i=0;i<n;i++)for(j=i+1;j<n;j++)if(fd(i)!==fd(j)&&dd(i,j)<bd){bd=dd(i,j);ba=i;bb=j}if(ba<0)break;add(ba,bb)}
   for(i=0;i<n;i++)adj.push([]);
   E.forEach(function(e){adj[e[0]].push([e[1],e[2]]);adj[e[1]].push([e[0],e[2]])});
   adj.forEach(function(l){l.sort(function(a,b){return a[0]-b[0]})});
-  S.G={n:n,x:x,y:y,E:E,adj:adj};S.orig=[];for(i=0;i<n;i++)S.orig.push(i);S.max=n;
+  S.G={n:n,x:x,y:y,E:E,adj:adj,hf:function(a,b){return dd(a,b)*10}};S.orig=[];for(i=0;i<n;i++)S.orig.push(i);S.max=n;
   S.start=rand(n);do{S.target=rand(n)}while(n>1&&S.target===S.start);
 }
 function randTarget(){
@@ -360,7 +390,7 @@ function drawGraph(W,H){
     cx.lineWidth=onp?3.5:2;cx.strokeStyle=onp?col.text:(S.fr[i]||hot>.3)?col.accent:col.bar;cx.stroke();
     if(i===S.start||(i===S.target&&S.algo!=='prim')){cx.beginPath();cx.arc(x,y,r+6,0,7);cx.strokeStyle=i===S.start?col.warm:col.pivot;cx.lineWidth=2;cx.stroke()}
     cx.fillStyle=fill?col.surface:col.text;cx.font='700 13px '+ff;cx.fillText(String.fromCharCode(65+i),x,y+1);
-    if(S.lab[i]!==undefined&&A.wt&&S.algo==='dijkstra'){cx.font='500 12px '+ff;cx.fillStyle=col.muted;cx.fillText(S.lab[i],x,y-r-9)}}
+    if(S.lab[i]!==undefined&&(S.algo==='dijkstra'||S.algo==='astar')){cx.font='500 12px '+ff;cx.fillStyle=col.muted;cx.fillText(S.lab[i],x,y-r-9)}}
 }
 function fit(){var r=window.devicePixelRatio||1;cv.width=Math.round(cv.clientWidth*r);cv.height=Math.round(cv.clientHeight*r);cx.setTransform(r,0,0,r,0,0)}
 
@@ -373,6 +403,8 @@ function buildChips(){
 }
 function info(){
   var A=ALGS[S.mode][S.algo];$('#iName').textContent=A.n;$('#iDesc').textContent=A.d;
+  var X=EXTRA[S.algo],li=function(t){return'<li>'+t+'</li>'};
+  $('#iMore').innerHTML='<h3>Como funciona</h3><ol>'+X[0].map(li).join('')+'</ol><h3>Observe na animação</h3><p style="margin-top:0;font-size:15px">'+X[1]+'</p><h3>Na vida real</h3><ul>'+X[2].map(li).join('')+'</ul>';
   var rows=S.mode==='graph'?[['Tempo',A.a],['Memória extra',A.s],['Resultado',A.o],['Requisito',A.r]]:[['Melhor caso',A.b],['Caso médio',A.a],['Pior caso',A.w],['Memória extra',A.s]];
   if(S.mode==='search')rows.push(['Requisito',S.algo==='linear'?'Nenhum':'Lista ordenada']);
   $('#iDl').innerHTML=rows.map(function(r){return'<dt>'+r[0]+'</dt><dd>'+r[1]+'</dd>'}).join('');
