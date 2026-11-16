@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Visualizador de algoritmos — Bruno Touldor</title>
+<meta name="description" content="Ordenação e busca animadas passo a passo: Bubble, Insertion, Merge, Quick, Heap, busca binária e mais.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#fafaf9;--surface:#fff;--line:#e4e4e7;--text:#17171c;--muted:#62646f;--accent:#5b46e0;--on:#fff;--bar:#c9ccd8;--warm:#e8590c;--ok:#12915f;--pivot:#b07d00;
+--head:'Bricolage Grotesque','Segoe UI',system-ui,sans-serif;--body:'DM Sans','Segoe UI',system-ui,sans-serif;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1014;--surface:#16171d;--line:#262833;--text:#ececf1;--muted:#9a9cab;--accent:#9d8cff;--on:#12101f;--bar:#3a3d4f;--warm:#ff8a5b;--ok:#4fd1a1;--pivot:#f2c94c}}
+:root[data-theme="dark"]{--bg:#0f1014;--surface:#16171d;--line:#262833;--text:#ececf1;--muted:#9a9cab;--accent:#9d8cff;--on:#12101f;--bar:#3a3d4f;--warm:#ff8a5b;--ok:#4fd1a1;--pivot:#f2c94c}
+*{box-sizing:border-box;margin:0}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{background:var(--bg);color:var(--text);font:400 16px/1.6 var(--body);-webkit-font-smoothing:antialiased}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:6px}
+.wrap{max-width:1080px;margin:0 auto;padding:0 20px}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:11;background:var(--bg)}
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:10;background:var(--bg);border-bottom:1px solid var(--line)}
+header .wrap{display:flex;align-items:center;justify-content:space-between;height:60px}
+.logo{font:700 18px var(--head);text-decoration:none}
+.right{display:flex;align-items:center;gap:20px}
+.right a{color:var(--muted);text-decoration:none;font-size:15px}.right a:hover{color:var(--text)}
+#theme{background:none;border:1px solid var(--line);width:38px;height:38px;border-radius:10px;cursor:pointer;display:grid;place-items:center}
+#theme:hover{border-color:var(--accent)}
+#theme svg{width:18px;height:18px}
+.intro{padding:56px 0 28px}
+h1{font:700 clamp(36px,6vw,64px)/1 var(--head);letter-spacing:-.03em}
+.intro p{color:var(--muted);max-width:56ch;margin-top:16px;font-size:18px}
+.bar{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center;justify-content:space-between;margin:28px 0 14px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:12px;padding:3px;background:var(--surface)}
+.seg button{border:0;background:none;padding:8px 18px;border-radius:9px;cursor:pointer;color:var(--muted);font-weight:500}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--on)}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chips button{border:1px solid var(--line);background:none;border-radius:999px;padding:6px 14px;cursor:pointer;color:var(--muted);font-size:15px;transition:border-color .2s,color .2s}
+.chips button:hover{border-color:var(--accent);color:var(--text)}
+.chips button[aria-pressed="true"]{border-color:var(--accent);color:var(--text);box-shadow:inset 0 0 0 1px var(--accent)}
+.stage{border:1px solid var(--line);border-radius:20px;background:var(--surface);padding:16px;position:relative}
+canvas{display:block;width:100%;height:360px}
+.legend{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:12px;color:var(--muted);font-size:14px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:14px}
+.stat{border:1px solid var(--line);border-radius:14px;padding:12px 16px;background:var(--surface)}
+.stat small{display:block;color:var(--muted);font-size:14px}
+.stat b{font:700 24px var(--head);letter-spacing:-.01em}
+.stat b.sm{font-size:18px;line-height:1.5;display:block}
+.ctrl{display:flex;flex-wrap:wrap;gap:14px 24px;align-items:center;margin-top:18px}
+.btns{display:flex;gap:8px;flex-wrap:wrap}
+.btn{border:1px solid var(--line);background:none;border-radius:10px;padding:10px 18px;cursor:pointer;font-weight:500;transition:border-color .2s,transform .2s}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);color:var(--on);border-color:var(--accent);min-width:104px}
+.btn.primary:hover{transform:translateY(-1px)}
+label{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:15px}
+input[type=range]{accent-color:var(--accent);width:130px}
+select,input[type=number]{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+input[type=number]{width:76px}
+.info{display:grid;grid-template-columns:1.3fr 1fr;gap:40px;margin:56px 0 80px;padding-top:40px;border-top:1px solid var(--line)}
+.info h2{font:700 28px/1.15 var(--head);letter-spacing:-.02em}
+.info p{color:var(--muted);margin-top:12px;max-width:56ch}
+dl{display:grid;grid-template-columns:auto 1fr;gap:10px 24px;align-content:start}
+dt{color:var(--muted)}dd{font:700 17px var(--head)}
+footer{border-top:1px solid var(--line);padding:28px 0;color:var(--muted);font-size:14px}
+footer .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.hide{display:none!important}
+@media (max-width:760px){canvas{height:260px}.info{grid-template-columns:1fr;gap:28px}.intro{padding-top:36px}.stats{gap:8px}.stat{padding:10px 12px}.right a{display:none}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+  <a class="logo" href="https://brunosimoesorlandelli.github.io/portfolio_page/">Bruno Touldor</a>
+  <div class="right"><a href="https://brunosimoesorlandelli.github.io/portfolio_page/#projetos">Voltar aos projetos</a>
+  <button id="theme" type="button" aria-label="Alternar tema claro e escuro"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button></div>
+</div></header>
+
+<main class="wrap">
+  <section class="intro">
+    <h1>Visualizador de algoritmos</h1>
+    <p>Veja ordenação e busca acontecendo passo a passo. Mude o tamanho, a velocidade e o tipo de entrada, e compare quantas operações cada algoritmo precisa.</p>
+  </section>
+
+  <div class="bar">
+    <div class="seg" role="group" aria-label="Tipo de algoritmo">
+      <button type="button" data-mode="sort" aria-pressed="true">Ordenação</button>
+      <button type="button" data-mode="search" aria-pressed="false">Busca</button>
+      <button type="button" data-mode="graph" aria-pressed="false">Grafos</button>
+    </div>
+    <div class="chips" id="chips" role="group" aria-label="Algoritmo"></div>
+  </div>
+
+  <div class="stage">
+    <canvas id="cv" role="img" aria-label="Barras que representam o array sendo processado"></canvas>
+    <div class="legend" id="legend"></div>
+  </div>
+
+  <div class="stats" aria-live="polite">
+    <div class="stat"><small id="lCmp">Comparações</small><b id="sCmp">0</b></div>
+    <div class="stat"><small id="lSwp">Trocas e escritas</small><b id="sSwp">0</b></div>
+    <div class="stat"><small>Estado</small><b class="sm" id="sState">Pronto</b></div>
+  </div>
+
+  <div class="ctrl">
+    <div class="btns">
+      <button class="btn primary" id="play" type="button">Iniciar</button>
+      <button class="btn" id="step" type="button">Passo</button>
+      <button class="btn" id="reset" type="button">Reiniciar</button>
+      <button class="btn" id="gen" type="button">Novo array</button>
+    </div>
+    <label>Tamanho <input id="size" type="range" min="8" max="120" value="40"><span id="sizeV">40</span></label>
+    <label>Velocidade <input id="speed" type="range" min="1" max="100" value="55"></label>
+    <label id="inWrap">Entrada
+      <select id="input"><option value="rand">Aleatória</option><option value="near">Quase ordenada</option><option value="rev">Invertida</option></select></label>
+    <label id="tgWrap" class="hide">Alvo <input id="target" type="number" min="1" value="1"><button class="btn" id="rndT" type="button">Sortear</button></label>
+  </div>
+
+  <section class="info">
+    <div><h2 id="iName"></h2><p id="iDesc"></p></div>
+    <dl id="iDl"></dl>
+  </section>
+</main>
+<footer><div class="wrap"><span>© 2026 Bruno Touldor</span><span>Espaço inicia e pausa a animação.</span></div></footer>
+
+<script>
+(function(){
+"use strict";
+var $=function(s){return document.querySelector(s)};
+function sw(a,i,j){var t=a[i];a[i]=a[j];a[j]=t}
+var C=function(i,j){return{t:'c',i:i,j:j}},Sw=function(i,j){return{t:'s',i:i,j:j}},D=function(i){return{t:'d',i:i}},ALL={t:'all'};
+
+function* bubble(a){var n=a.length;for(var i=0;i<n-1;i++){var s=false;for(var j=0;j<n-1-i;j++){yield C(j,j+1);if(a[j]>a[j+1]){sw(a,j,j+1);s=true;yield Sw(j,j+1)}}yield D(n-1-i);if(!s)break}yield ALL}
+function* selection(a){var n=a.length;for(var i=0;i<n-1;i++){var m=i;for(var j=i+1;j<n;j++){yield C(j,m);if(a[j]<a[m])m=j}if(m!==i){sw(a,i,m);yield Sw(i,m)}yield D(i)}yield ALL}
+function* insertion(a){for(var i=1;i<a.length;i++){for(var j=i;j>0;j--){yield C(j-1,j);if(a[j-1]>a[j]){sw(a,j-1,j);yield Sw(j-1,j)}else break}}yield ALL}
+function* merge(a){
+  function* ms(l,r){if(r<=l)return;var m=(l+r)>>1;yield* ms(l,m);yield* ms(m+1,r);
+    var L=a.slice(l,m+1),R=a.slice(m+1,r+1),i=0,j=0,k=l;
+    while(i<L.length&&j<R.length){yield C(l+i,m+1+j);if(L[i]<=R[j])a[k]=L[i++];else a[k]=R[j++];yield{t:'w',i:k++}}
+    while(i<L.length){a[k]=L[i++];yield{t:'w',i:k++}}while(j<R.length){a[k]=R[j++];yield{t:'w',i:k++}}}
+  yield* ms(0,a.length-1);yield ALL}
+function* quick(a){
+  function* qs(l,r){if(l>r)return;if(l===r){yield D(l);return}var p=a[r],s=l;yield{t:'p',i:r};
+    for(var j=l;j<r;j++){yield C(j,r);if(a[j]<p){if(s!==j){sw(a,s,j);yield Sw(s,j)}s++}}
+    if(s!==r){sw(a,s,r);yield Sw(s,r)}yield D(s);yield* qs(l,s-1);yield* qs(s+1,r)}
+  yield* qs(0,a.length-1);yield ALL}
+function* heap(a){var n=a.length;
+  function* sift(i,e){for(;;){var l=2*i+1,r=l+1,m=i;if(l<e){yield C(l,m);if(a[l]>a[m])m=l}if(r<e){yield C(r,m);if(a[r]>a[m])m=r}if(m===i)return;sw(a,i,m);yield Sw(i,m);i=m}}
+  for(var i=(n>>1)-1;i>=0;i--)yield* sift(i,n);
+  for(var e=n-1;e>0;e--){sw(a,0,e);yield Sw(0,e);yield D(e);yield* sift(0,e)}yield ALL}
+
+var R=function(lo,hi){return{t:'r',lo:lo,hi:hi}},Ck=function(i){return{t:'c',i:i,j:-1}},F=function(i){return{t:'f',i:i}},NF={t:'n'};
+function* linear(a,x){for(var i=0;i<a.length;i++){yield Ck(i);if(a[i]===x){yield F(i);return}}yield NF}
+function* binary(a,x){var lo=0,hi=a.length-1;while(lo<=hi){yield R(lo,hi);var m=(lo+hi)>>1;yield Ck(m);if(a[m]===x){yield F(m);return}if(a[m]<x)lo=m+1;else hi=m-1}yield NF}
+function* jump(a,x){var n=a.length,st=Math.floor(Math.sqrt(n)),p=0,c=Math.min(st,n)-1;
+  for(;;){yield R(p,c);yield Ck(c);if(a[c]>=x)break;if(c===n-1){yield NF;return}p=c+1;c=Math.min(c+st,n-1)}
+  yield R(p,c);for(var i=p;i<=c;i++){yield Ck(i);if(a[i]===x){yield F(i);return}if(a[i]>x)break}yield NF}
+function* interp(a,x){var lo=0,hi=a.length-1;
+  while(lo<=hi&&x>=a[lo]&&x<=a[hi]){yield R(lo,hi);var d=a[hi]-a[lo],p=d?lo+Math.floor((x-a[lo])*(hi-lo)/d):lo;yield Ck(p);if(a[p]===x){yield F(p);return}if(a[p]<x)lo=p+1;else hi=p-1}yield NF}
+
+var GV=function(i){return{t:'v',i:i}},GE=function(u,v){return{t:'e',u:u,v:v}},GQ=function(i,f,d){return{t:'q',i:i,f:f,d:d}};
+function ek(a,b){return a<b?a+'-'+b:b+'-'+a}
+function trace(par,s,t){var p=[t];while(p[0]!==s&&par[p[0]]!==undefined)p.unshift(par[p[0]]);return p[0]===s?p:null}
+function* bfs(G,s,t){var seen=[],par=[],q=[s];seen[s]=1;yield GQ(s);
+  while(q.length){var u=q.shift();yield GV(u);if(u===t)break;
+    for(var k=0;k<G.adj[u].length;k++){var v=G.adj[u][k][0];yield GE(u,v);if(!seen[v]){seen[v]=1;par[v]=u;q.push(v);yield GQ(v,u)}}}
+  var p=trace(par,s,t);yield p?{t:'path',p:p}:NF}
+function* dfs(G,s,t){var seen=[],par=[];
+  function* go(u){seen[u]=1;yield GV(u);if(u===t)return true;
+    for(var k=0;k<G.adj[u].length;k++){var v=G.adj[u][k][0];yield GE(u,v);if(!seen[v]){par[v]=u;yield GQ(v,u);if(yield* go(v))return true}}return false}
+  yield GQ(s);var ok=yield* go(s),p=ok?trace(par,s,t):null;yield p?{t:'path',p:p}:NF}
+function* dijkstra(G,s,t){var n=G.n,d=[],par=[],dn=[],i;for(i=0;i<n;i++)d[i]=Infinity;d[s]=0;yield GQ(s,undefined,0);
+  for(;;){var u=-1;for(i=0;i<n;i++)if(!dn[i]&&d[i]<Infinity&&(u<0||d[i]<d[u]))u=i;if(u<0)break;
+    dn[u]=1;yield GV(u);if(u===t)break;
+    for(var k=0;k<G.adj[u].length;k++){var v=G.adj[u][k][0],w=G.adj[u][k][1];yield GE(u,v);if(!dn[v]&&d[u]+w<d[v]){d[v]=d[u]+w;par[v]=u;yield GQ(v,u,d[v])}}}
+  var p=dn[t]?trace(par,s,t):null;yield p?{t:'path',p:p,c:d[t]}:NF}
+function* prim(G,s){var tr=[],cnt=1;tr[s]=1;yield GQ(s);yield GV(s);
+  while(cnt<G.n){var best=null;for(var k=0;k<G.E.length;k++){var e=G.E[k];if(!!tr[e[0]]===!!tr[e[1]])continue;yield GE(e[0],e[1]);if(!best||e[2]<best[2])best=e}
+    if(!best)break;var v=tr[best[0]]?best[1]:best[0],u=v===best[0]?best[1]:best[0];tr[v]=1;cnt++;yield{t:'m',u:u,v:v,w:best[2]};yield GV(v)}
+  yield{t:'mst'}}
+
+var ALGS={
+ sort:{
+  bubble:{n:'Bubble sort',g:bubble,d:'Compara pares vizinhos e troca os que estão fora de ordem. A cada passada, o maior valor restante sobe até o fim.',b:'O(n)',a:'O(n²)',w:'O(n²)',s:'O(1)'},
+  selection:{n:'Selection sort',g:selection,d:'Procura o menor valor do trecho não ordenado e o coloca na primeira posição livre. Faz poucas trocas, mas sempre compara tudo.',b:'O(n²)',a:'O(n²)',w:'O(n²)',s:'O(1)'},
+  insertion:{n:'Insertion sort',g:insertion,d:'Pega cada elemento e o desliza para a esquerda até achar seu lugar, como ao organizar cartas na mão. Muito rápido em listas quase ordenadas.',b:'O(n)',a:'O(n²)',w:'O(n²)',s:'O(1)'},
+  merge:{n:'Merge sort',g:merge,d:'Divide o array ao meio, ordena cada metade e intercala os resultados. Desempenho previsível, ao custo de memória extra.',b:'O(n log n)',a:'O(n log n)',w:'O(n log n)',s:'O(n)'},
+  quick:{n:'Quick sort',g:quick,d:'Escolhe um pivô e separa os menores à esquerda e os maiores à direita, repetindo em cada lado. Costuma ser o mais rápido na prática.',b:'O(n log n)',a:'O(n log n)',w:'O(n²)',s:'O(log n)'},
+  heap:{n:'Heap sort',g:heap,d:'Monta um heap máximo e retira o maior valor repetidamente, colocando-o no fim. Garante O(n log n) sem memória extra.',b:'O(n log n)',a:'O(n log n)',w:'O(n log n)',s:'O(1)'}},
+ search:{
+  linear:{n:'Busca linear',g:linear,d:'Olha posição por posição até achar o alvo. Funciona em qualquer lista, ordenada ou não.',b:'O(1)',a:'O(n)',w:'O(n)',s:'O(1)'},
+  binary:{n:'Busca binária',g:binary,d:'Em uma lista ordenada, compara com o meio e descarta metade a cada passo. Dobrar a lista custa apenas mais uma comparação.',b:'O(1)',a:'O(log n)',w:'O(log n)',s:'O(1)'},
+  jump:{n:'Jump search',g:jump,d:'Pula em blocos de √n até passar do alvo e depois varre o último bloco. Meio-termo entre a busca linear e a binária.',b:'O(1)',a:'O(√n)',w:'O(√n)',s:'O(1)'},
+  interp:{n:'Busca por interpolação',g:interp,d:'Estima a posição do alvo pelo valor, como ao procurar um nome na agenda. Excelente quando os valores estão bem distribuídos.',b:'O(1)',a:'O(log log n)',w:'O(n)',s:'O(1)'}},
+ graph:{
+  bfs:{n:'BFS (largura)',g:bfs,d:'Explora o grafo em camadas, dos nós mais próximos da origem para os mais distantes, usando uma fila. Por isso acha o caminho com menos arestas.',a:'O(V + E)',s:'O(V)',o:'Menor caminho em número de arestas',r:'Nenhum'},
+  dfs:{n:'DFS (profundidade)',g:dfs,d:'Segue por um caminho até o fim e só volta quando trava. Visita o grafo todo, mas o caminho que encontra pode ser bem longo.',a:'O(V + E)',s:'O(V)',o:'Um caminho, nem sempre o menor',r:'Nenhum'},
+  dijkstra:{n:'Dijkstra',g:dijkstra,wt:true,d:'Sempre visita o nó descoberto mais perto da origem e atualiza seus vizinhos. Os números ao lado dos nós mostram a melhor distância conhecida.',a:'O((V + E) log V)',s:'O(V)',o:'Menor caminho em custo',r:'Pesos não negativos'},
+  prim:{n:'Prim (árvore mínima)',g:prim,wt:true,d:'Parte de um nó e adiciona sempre a aresta mais barata que liga a árvore a um nó novo, até cobrir o grafo inteiro.',a:'O(E log V)',s:'O(V)',o:'Árvore geradora de custo mínimo',r:'Grafo conexo'}}
+};
+
+var S={mode:'sort',algo:'bubble',a:[],orig:[],gen:null,running:false,finished:false,acc:0,wave:-2,
+  cmp:0,swp:0,hc:[],hs:[],hd:[],done:[],pivot:-1,lo:-1,hi:-1,found:-1,nf:false,target:1,max:1,
+  G:null,start:0,pick:false,pos:null,fr:[],tree:{},eh:{},lab:[],par:[],path:{},pn:[],total:0,cost:undefined,mst:false};
+var cv=$('#cv'),cx=cv.getContext('2d'),col={};
+
+function readColors(){var s=getComputedStyle(document.documentElement);['bar','accent','warm','ok','pivot','muted','line','surface','text'].forEach(function(k){col[k]=s.getPropertyValue('--'+k).trim()})}
+function rand(n){return Math.floor(Math.random()*n)}
+
+function makeArray(){
+  var n=+$('#size').value,a=[],i;if(S.mode==='graph'){makeGraph(n);return}
+  if(S.mode==='sort'){
+    for(i=1;i<=n;i++)a.push(i);
+    var k=$('#input').value;
+    if(k==='rev')a.reverse();
+    else if(k==='near'){var m=Math.max(2,n>>3);for(i=0;i<m;i++)sw(a,rand(n),rand(n))}
+    else for(i=n-1;i>0;i--)sw(a,i,rand(i+1));
+    S.max=n;
+  }else{
+    var v=0;for(i=0;i<n;i++){v+=1+rand(5);a.push(v)}S.max=v;
+  }
+  S.orig=a.slice();
+}
+function makeGraph(n){
+  var asp=2.2,x=[],y=[],md=.6*Math.sqrt(asp/n),tr=0,i,j,E=[],seen={},par=[],adj=[];
+  while(x.length<n){var px=Math.random(),py=Math.random(),ok=true;
+    for(j=0;j<x.length;j++)if(Math.hypot((px-x[j])*asp,py-y[j])<md){ok=false;break}
+    if(ok){x.push(px);y.push(py)}else if(++tr%30===0)md*=.9}
+  function dd(a,b){return Math.hypot((x[a]-x[b])*asp,y[a]-y[b])}
+  function fd(a){return par[a]===a?a:(par[a]=fd(par[a]))}
+  function add(a,b){var k=ek(a,b);if(seen[k])return;seen[k]=1;E.push([Math.min(a,b),Math.max(a,b),Math.max(1,Math.round(dd(a,b)*10))]);par[fd(a)]=fd(b)}
+  for(i=0;i<n;i++)par[i]=i;
+  for(i=0;i<n;i++){var o=[];for(j=0;j<n;j++)if(j!==i)o.push(j);o.sort(function(a,b){return dd(i,a)-dd(i,b)});add(i,o[0]);if(o.length>1&&Math.random()<.7)add(i,o[1])}
+  for(;;){var bd=1e9,ba=-1,bb=-1;for(i=0;i<n;i++)for(j=i+1;j<n;j++)if(fd(i)!==fd(j)&&dd(i,j)<bd){bd=dd(i,j);ba=i;bb=j}if(ba<0)break;add(ba,bb)}
+  for(i=0;i<n;i++)adj.push([]);
+  E.forEach(function(e){adj[e[0]].push([e[1],e[2]]);adj[e[1]].push([e[0],e[2]])});
+  adj.forEach(function(l){l.sort(function(a,b){return a[0]-b[0]})});
+  S.G={n:n,x:x,y:y,E:E,adj:adj};S.orig=[];for(i=0;i<n;i++)S.orig.push(i);S.max=n;
+  S.start=rand(n);do{S.target=rand(n)}while(n>1&&S.target===S.start);
+}
+function randTarget(){
+  var o=S.orig,x=o[rand(o.length)];
+  if(Math.random()>=.8&&o.length<S.max){do{x=1+rand(S.max)}while(o.indexOf(x)>=0)}
+  S.target=x;$('#target').value=x}
+
+function reset(keepTarget){
+  S.a=S.orig.slice();var n=S.a.length;
+  S.hc=new Array(n).fill(0);S.hs=new Array(n).fill(0);S.hd=new Array(n).fill(0);S.done=new Array(n).fill(0);
+  S.pivot=-1;S.lo=-1;S.hi=-1;S.found=-1;S.nf=false;S.cmp=0;S.swp=0;S.wave=-2;S.acc=0;S.running=false;S.finished=false;
+  S.fr=[];S.tree={};S.eh={};S.lab=[];S.par=[];S.path={};S.pn=[];S.total=0;S.cost=undefined;S.mst=false;
+  S.gen=S.mode==='graph'?ALGS.graph[S.algo].g(S.G,S.start,S.target):ALGS[S.mode][S.algo].g(S.a,S.target);
+  ui();
+}
+function sps(){return 1.5*Math.pow(1.07,+$('#speed').value)}
+
+function apply(e){
+  switch(e.t){
+    case 'c':S.cmp++;S.hc[e.i]=1;if(e.j>=0)S.hc[e.j]=1;break;
+    case 's':S.swp++;S.hs[e.i]=1;S.hs[e.j]=1;break;
+    case 'w':S.swp++;S.hs[e.i]=1;break;
+    case 'd':S.done[e.i]=1;S.hd[e.i]=1;break;
+    case 'p':S.pivot=e.i;break;
+    case 'all':S.wave=0;S.pivot=-1;break;
+    case 'r':S.lo=e.lo;S.hi=e.hi;break;
+    case 'f':S.found=e.i;S.hd[e.i]=1;break;
+    case 'n':S.nf=true;break;
+    case 'v':S.done[e.i]=1;S.hd[e.i]=1;S.hc[e.i]=1;S.swp++;break;
+    case 'e':S.cmp++;S.eh[ek(e.u,e.v)]=1;S.hc[e.v]=1;break;
+    case 'q':S.fr[e.i]=1;if(e.d!==undefined)S.lab[e.i]=e.d;
+      if(e.f!==undefined){if(S.par[e.i]!==undefined)delete S.tree[ek(S.par[e.i],e.i)];S.par[e.i]=e.f;S.tree[ek(e.f,e.i)]=1}break;
+    case 'm':S.tree[ek(e.u,e.v)]=1;S.total+=e.w;break;
+    case 'mst':S.mst=true;break;
+    case 'path':S.pn=e.p;S.cost=e.c;for(var j=0;j<e.p.length-1;j++)S.path[ek(e.p[j],e.p[j+1])]=1;break;
+  }
+}
+function step(){
+  if(S.finished)return;
+  var r=S.gen.next();
+  if(r.done){S.finished=true;S.running=false;ui();return}
+  apply(r.value);
+}
+function gState(){
+  if(S.algo==='prim')return S.mst?'Árvore pronta · peso '+S.total:S.running?'Construindo…':S.cmp?'Em pausa':'Pronto';
+  if(S.pn.length)return'Caminho de '+(S.pn.length-1)+' arestas'+(S.cost!==undefined?' · custo '+S.cost:'');
+  if(S.nf)return'Sem caminho';
+  return S.running?'Explorando…':S.cmp?'Em pausa':'Pronto'}
+function state(){if(S.mode==='graph')return gState();
+  if(S.mode==='sort'){return S.finished&&S.wave===-2?'Ordenado':S.finished?'Finalizando':S.running?'Ordenando…':S.cmp?'Em pausa':'Pronto'}
+  if(S.found>=0)return'Encontrado no índice '+S.found;
+  if(S.nf)return'Valor não encontrado';
+  return S.running?'Buscando…':S.cmp?'Em pausa':'Pronto'
+}
+function ui(){
+  $('#play').textContent=S.running?'Pausar':(S.finished?'Repetir':'Iniciar');
+  $('#sCmp').textContent=S.cmp;
+  if(S.mode==='sort'||S.mode==='graph')$('#sSwp').textContent=S.swp;
+  else $('#sSwp').textContent=(S.lo>=0&&S.found<0&&!S.nf)?(S.hi-S.lo+1):(S.found>=0||S.nf?'—':S.a.length);
+  $('#sState').textContent=state();
+}
+function play(){
+  if(S.finished){reset();}
+  S.running=!S.running;ui();
+}
+
+var last=0;
+function frame(t){
+  var dt=Math.min(.05,(t-last)/1000||0);last=t;var n=S.a.length,i;
+  if(S.running){S.acc+=dt*sps();var k=0;while(S.acc>=1&&S.running&&k<60){S.acc-=1;step();k++}if(S.acc>60)S.acc=0}
+  if(S.wave>=0){var p=S.wave;S.wave+=dt*n*1.2+.5;for(i=Math.floor(p);i<Math.min(n,Math.floor(S.wave));i++){S.done[i]=1;S.hd[i]=1}if(S.wave>=n){S.wave=-2;ui()}}
+  var f=Math.pow(.002,dt);
+  for(i=0;i<n;i++){S.hc[i]*=f;S.hs[i]*=f;S.hd[i]*=f}
+  for(var ky in S.eh)S.eh[ky]*=f;
+  if(S.running||S.wave>=0)ui();
+  draw();requestAnimationFrame(frame);
+}
+
+function draw(){
+  var W=cv.clientWidth,H=cv.clientHeight,n=S.a.length,top=22;
+  cx.clearRect(0,0,W,H);if(S.mode==='graph'){drawGraph(W,H);return}
+  var g=n>90?1:n>45?2:3,bw=(W-g*(n-1))/n,usable=H-top-2,search=S.mode==='search',i;
+  for(i=0;i<n;i++){
+    var h=Math.max(3,S.a[i]/S.max*usable),x=i*(bw+g),y=H-h,rd=Math.min(4,bw/2);
+    var dim=(search&&S.lo>=0&&S.found<0&&(i<S.lo||i>S.hi))?.28:1;
+    var layers=[[col.bar,1,0]];
+    if(S.done[i])layers.push([col.ok,.92,S.hd[i]]);
+    if(S.found===i)layers.push([col.ok,1,1]);
+    if(i===S.pivot)layers.push([col.pivot,1,0]);
+    if(S.hs[i]>.02)layers.push([col.warm,Math.min(1,S.hs[i]*1.3),S.hs[i]]);
+    if(S.hc[i]>.02)layers.push([col.accent,Math.min(1,S.hc[i]*1.3),S.hc[i]]);
+    for(var L=0;L<layers.length;L++){
+      cx.globalAlpha=dim*layers[L][1];cx.fillStyle=layers[L][0];
+      cx.shadowColor=layers[L][0];cx.shadowBlur=layers[L][2]>.05?18*layers[L][2]:0;
+      cx.beginPath();if(cx.roundRect)cx.roundRect(x,y,bw,h,[rd,rd,0,0]);else cx.rect(x,y,bw,h);cx.fill();
+    }
+  }
+  cx.globalAlpha=1;cx.shadowBlur=0;
+  if(search){
+    var ty=H-S.target/S.max*usable;
+    cx.strokeStyle=col.warm;cx.lineWidth=1.5;cx.setLineDash([6,5]);cx.beginPath();cx.moveTo(0,ty);cx.lineTo(W,ty);cx.stroke();cx.setLineDash([]);
+    cx.fillStyle=col.warm;cx.font='500 13px '+getComputedStyle(document.body).fontFamily;cx.textAlign='right';
+    cx.fillText('alvo '+S.target,W-4,Math.max(12,ty-6));
+  }
+}
+function ln(x1,y1,x2,y2,c,w,al){cx.globalAlpha=al;cx.strokeStyle=c;cx.lineWidth=w;cx.beginPath();cx.moveTo(x1,y1);cx.lineTo(x2,y2);cx.stroke();cx.globalAlpha=1}
+function drawGraph(W,H){
+  var G=S.G,pad=32,r=G.n>16?12:15,A=ALGS.graph[S.algo],ff=getComputedStyle(document.body).fontFamily,i;
+  var X=function(i){return pad+G.x[i]*(W-2*pad)},Y=function(i){return pad+G.y[i]*(H-2*pad)};
+  S.pos=[];for(i=0;i<G.n;i++)S.pos.push([X(i),Y(i),r]);
+  cx.lineCap='round';cx.textAlign='center';cx.textBaseline='middle';
+  G.E.forEach(function(e){var k=e[0]+'-'+e[1],a=e[0],b=e[1];
+    if(S.path[k])ln(X(a),Y(a),X(b),Y(b),col.ok,5,1);else if(S.tree[k])ln(X(a),Y(a),X(b),Y(b),col.accent,3.5,1);else ln(X(a),Y(a),X(b),Y(b),col.bar,2,1);
+    if(S.eh[k]>.02){cx.shadowColor=col.warm;cx.shadowBlur=12*S.eh[k];ln(X(a),Y(a),X(b),Y(b),col.warm,4,Math.min(1,S.eh[k]*1.3));cx.shadowBlur=0}});
+  if(A.wt){cx.font='500 12px '+ff;cx.lineWidth=4;cx.lineJoin='round';
+    G.E.forEach(function(e){var mx=(X(e[0])+X(e[1]))/2,my=(Y(e[0])+Y(e[1]))/2;cx.strokeStyle=col.surface;cx.strokeText(e[2],mx,my);cx.fillStyle=col.muted;cx.fillText(e[2],mx,my)})}
+  for(i=0;i<G.n;i++){var x=X(i),y=Y(i),fill=S.done[i],hot=S.hc[i],onp=S.pn.indexOf(i)>=0;
+    cx.shadowColor=fill&&!(hot>.05)?col.ok:col.accent;cx.shadowBlur=hot>.05?20*hot:S.hd[i]>.05?16*S.hd[i]:0;
+    cx.beginPath();cx.arc(x,y,r,0,7);cx.fillStyle=fill?col.ok:col.surface;cx.fill();cx.shadowBlur=0;
+    cx.lineWidth=onp?3.5:2;cx.strokeStyle=onp?col.text:(S.fr[i]||hot>.3)?col.accent:col.bar;cx.stroke();
+    if(i===S.start||(i===S.target&&S.algo!=='prim')){cx.beginPath();cx.arc(x,y,r+6,0,7);cx.strokeStyle=i===S.start?col.warm:col.pivot;cx.lineWidth=2;cx.stroke()}
+    cx.fillStyle=fill?col.surface:col.text;cx.font='700 13px '+ff;cx.fillText(String.fromCharCode(65+i),x,y+1);
+    if(S.lab[i]!==undefined&&A.wt&&S.algo==='dijkstra'){cx.font='500 12px '+ff;cx.fillStyle=col.muted;cx.fillText(S.lab[i],x,y-r-9)}}
+}
+function fit(){var r=window.devicePixelRatio||1;cv.width=Math.round(cv.clientWidth*r);cv.height=Math.round(cv.clientHeight*r);cx.setTransform(r,0,0,r,0,0)}
+
+function buildChips(){
+  var box=$('#chips');box.innerHTML='';
+  Object.keys(ALGS[S.mode]).forEach(function(k){
+    var b=document.createElement('button');b.type='button';b.textContent=ALGS[S.mode][k].n;b.setAttribute('aria-pressed',k===S.algo);
+    b.onclick=function(){S.algo=k;buildChips();info();reset()};box.appendChild(b);
+  });
+}
+function info(){
+  var A=ALGS[S.mode][S.algo];$('#iName').textContent=A.n;$('#iDesc').textContent=A.d;
+  var rows=S.mode==='graph'?[['Tempo',A.a],['Memória extra',A.s],['Resultado',A.o],['Requisito',A.r]]:[['Melhor caso',A.b],['Caso médio',A.a],['Pior caso',A.w],['Memória extra',A.s]];
+  if(S.mode==='search')rows.push(['Requisito',S.algo==='linear'?'Nenhum':'Lista ordenada']);
+  $('#iDl').innerHTML=rows.map(function(r){return'<dt>'+r[0]+'</dt><dd>'+r[1]+'</dd>'}).join('');
+  var lg=S.mode==='graph'?[['bar','Não visitado'],['accent','Descoberto ou examinando'],['ok','Visitado e caminho'],['warm','Origem'],['pivot','Destino'],[null,'Clique em dois nós para escolher origem e destino.']]:S.mode==='sort'?[['bar','Aguardando'],['accent','Comparando'],['warm','Trocando ou escrevendo'],['pivot','Pivô'],['ok','Posição final']]:[['bar','Candidato'],['accent','Comparando'],['warm','Alvo'],['ok','Encontrado']];
+  $('#legend').innerHTML=lg.map(function(l){return l[0]?'<span><i style="background:var(--'+l[0]+')"></i>'+l[1]+'</span>':'<span>'+l[1]+'</span>'}).join('');
+}
+function setMode(m){
+  S.mode=m;S.algo=m==='sort'?'bubble':m==='graph'?'bfs':'binary';
+  var sz=$('#size'),gr=m==='graph';sz.min=gr?5:8;sz.max=gr?24:120;sz.value=gr?12:40;$('#sizeV').textContent=sz.value;cv.style.cursor=gr?'pointer':'';
+  document.querySelectorAll('[data-mode]').forEach(function(b){b.setAttribute('aria-pressed',b.dataset.mode===m)});
+  $('#inWrap').classList.toggle('hide',m!=='sort');$('#tgWrap').classList.toggle('hide',m!=='search');
+  $('#lSwp').textContent=m==='sort'?'Trocas e escritas':m==='graph'?'Nós visitados':'Posições no intervalo';
+  $('#lCmp').textContent=m==='graph'?'Arestas examinadas':'Comparações';$('#gen').textContent=m==='graph'?'Novo grafo':'Novo array';
+  makeArray();if(m==='search'){$('#target').max=S.max;randTarget()}
+  buildChips();info();reset();
+}
+function regen(){makeArray();if(S.mode==='search'){$('#target').max=S.max;randTarget()}reset()}
+
+document.querySelectorAll('[data-mode]').forEach(function(b){b.onclick=function(){setMode(b.dataset.mode)}});
+$('#play').onclick=play;
+cv.addEventListener('click',function(ev){
+  if(S.mode!=='graph'||!S.pos)return;var b=cv.getBoundingClientRect(),x=ev.clientX-b.left,y=ev.clientY-b.top;
+  for(var i=0;i<S.pos.length;i++){var p=S.pos[i];if(Math.hypot(x-p[0],y-p[1])<=p[2]+8){
+    if(S.pick){if(i===S.start)return;S.target=i}else{if(i===S.target)return;S.start=i}
+    S.pick=!S.pick;reset();return}}});
+$('#step').onclick=function(){S.running=false;step();ui()};
+$('#reset').onclick=function(){reset()};
+$('#gen').onclick=regen;
+$('#rndT').onclick=function(){randTarget();reset()};
+$('#size').oninput=function(){$('#sizeV').textContent=this.value;regen()};
+$('#input').onchange=regen;
+$('#target').onchange=function(){var v=Math.max(1,Math.min(S.max,Math.round(+this.value)||1));S.target=v;this.value=v;reset()};
+document.addEventListener('keydown',function(e){if(e.code==='Space'&&!/INPUT|SELECT|BUTTON/.test(document.activeElement.tagName)){e.preventDefault();play()}});
+
+$('#theme').onclick=function(){
+  var r=document.documentElement,dark=getComputedStyle(r).getPropertyValue('--bg').trim()==='#0f1014';
+  var next=dark?'light':'dark';r.setAttribute('data-theme',next);try{localStorage.setItem('theme',next)}catch(e){}readColors();
+};
+try{var th=localStorage.getItem('theme');if(th)document.documentElement.setAttribute('data-theme',th)}catch(e){}
+window.addEventListener('resize',fit);
+if(window.matchMedia)matchMedia('(prefers-color-scheme: dark)').addEventListener('change',readColors);
+
+readColors();fit();setMode('sort');requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
