@@ -1,0 +1,71 @@
+/* Estilo compartilhado: mesmo visual do index.html do portfólio.
+   Uso nas páginas de projeto: <link rel="stylesheet" href="../portfolio.css"> */
+:root {
+  --bg: #0f1014; --surface: #16171d; --line: #262833; --text: #ececf1; --muted: #9a9cab;
+  --accent: #9d8cff; --on-accent: #12101f;
+  --sec: #6fa8dc; --warm: #ff8a5b; --ok: #4fd1a1; --pivot: #f2c94c; --bar: #3a3d4f;
+  --head: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body: "DM Sans", "Segoe UI", system-ui, sans-serif;
+  color-scheme: dark;
+  box-sizing: border-box;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+:root[data-theme="light"] {
+  --bg: #fafaf9; --surface: #ffffff; --line: #e4e4e7; --text: #17171c; --muted: #62646f;
+  --accent: #5b46e0; --on-accent: #ffffff;
+  --sec: #2f6fb0; --warm: #e8590c; --ok: #12915f; --pivot: #b07d00; --bar: #c9ccd8;
+  color-scheme: light;
+}
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: calc(80px + env(safe-area-inset-top, 0px)); }
+body { margin: 0; background: var(--bg); color: var(--text); font: 400 17px/1.65 var(--body); -webkit-font-smoothing: antialiased; }
+a { color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+.wrap { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+
+/* Header (igual ao do portfólio) */
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 11; background: var(--bg); }
+.site-header {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 10;
+  background: color-mix(in srgb, var(--bg) 82%, transparent);
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--line);
+}
+.site-header .wrap { display: flex; align-items: center; justify-content: space-between; height: 64px; }
+.site-header .logo { font: 700 18px var(--head); text-decoration: none; }
+.site-header nav { display: flex; align-items: center; gap: 28px; }
+.site-header nav a { text-decoration: none; color: var(--muted); font-size: 15px; transition: color .2s; }
+.site-header nav a:hover { color: var(--text); }
+#theme {
+  background: none; border: 1px solid var(--line); color: var(--text);
+  width: 38px; height: 38px; padding: 0; border-radius: 10px; cursor: pointer; display: grid; place-items: center;
+}
+#theme:hover { border-color: var(--accent); }
+#theme svg { width: 18px; height: 18px; }
+[data-theme="dark"] .i-sun, [data-theme="light"] .i-moon { display: none; }
+
+/* Título de página, botões e rodapé */
+.page-title { padding: 56px 0 8px; }
+.page-title h1 { margin: 0; font: 700 clamp(36px, 6vw, 64px)/1 var(--head); letter-spacing: -.03em; }
+.page-title p { margin: 16px 0 0; color: var(--muted); max-width: 56ch; font-size: 18px; }
+.btn {
+  display: inline-block; padding: 10px 18px; border-radius: 10px; border: 1px solid var(--line);
+  background: none; color: var(--text); font: 500 16px var(--body); text-decoration: none; cursor: pointer;
+  transition: border-color .2s, transform .2s;
+}
+.btn:hover { border-color: var(--accent); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.btn.primary:hover { transform: translateY(-1px); }
+.site-footer { border-top: 1px solid var(--line); padding: 32px 0; color: var(--muted); font-size: 14px; margin-top: 48px; }
+.site-footer .wrap { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+
+@media (max-width: 760px) {
+  body { font-size: 16px; }
+  .site-header nav { gap: 16px; }
+  .page-title { padding-top: 36px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  * { transition: none !important; }
+}
