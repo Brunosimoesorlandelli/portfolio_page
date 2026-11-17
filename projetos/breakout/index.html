@@ -6,8 +6,8 @@
 <link rel="stylesheet" href="../portfolio.css">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Breakout | Bruno Simões Orlandelli</title>
-<meta name="description" content="Breakout em JavaScript puro: colisão circular, máquina de estados, fases e animação em canvas.">
+<title>Breakout Roguelike | Bruno Simões Orlandelli</title>
+<meta name="description" content="Breakout Roguelike em JavaScript puro: bolas especiais, artefatos, chefes, loja e prestígio em canvas.">
 <style>
   :root{--accent-ink:var(--on-accent)}
 h1,.overlay h2{font-family:var(--head);letter-spacing:-.02em}
@@ -17,20 +17,20 @@ h1,.overlay h2{font-family:var(--head);letter-spacing:-.02em}
     min-height: 100vh;
     background: var(--bg);
     color: var(--text);
-    font-family:var(--body)
+    font-family:var(--body);
     line-height: 1.5;
   }
   main { width: min(520px, 100% - 32px); margin: 0 auto; padding: 20px 0 40px; }
   .sub { margin: 0 0 20px; color: var(--muted); font-size: 15px; }
-  dl.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 0 0 12px; }
+  dl.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 0 0 12px; }
   dl.stats div { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; }
   dl.stats dt { font-size: 12px; color: var(--muted); }
-  dl.stats dd { margin: 0; font-size: 20px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  dl.stats dd { margin: 0; font-size: 18px; font-weight: 600; font-variant-numeric: tabular-nums; }
   .stage { position: relative; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: var(--surface); }
   canvas { display: block; width: 100%; aspect-ratio: 4 / 5; touch-action: none; cursor: none; }
   .overlay {
     position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
-    gap: 8px; padding: 24px; text-align: center;
+    gap: 8px; padding: 20px; text-align: center; overflow-y: auto; justify-content: safe center;
     background: var(--surface);
     background: color-mix(in srgb, var(--surface) 84%, transparent);
   }
@@ -42,6 +42,14 @@ h1,.overlay h2{font-family:var(--head);letter-spacing:-.02em}
     border: 0; border-radius: 10px; padding: 10px 22px; cursor: pointer;
   }
   button:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .overlay p { max-width: 38ch; }
+  .cards { display: grid; gap: 8px; width: 100%; max-width: 400px; margin-bottom: 8px; }
+  .card { font: inherit; text-align: left; color: var(--text); background: var(--bg); border: 2px solid var(--line); border-left: 6px solid var(--rc, var(--line)); border-radius: 10px; padding: 8px 12px; cursor: pointer; display: grid; gap: 2px; }
+  .card b { font-size: 15px; } .card small { color: var(--muted); } .card span { font-size: 13px; color: var(--muted); }
+  .card:hover:not(:disabled) { border-color: var(--rc, var(--accent)); }
+  .card:disabled { opacity: .45; cursor: not-allowed; } div.card { cursor: default; }
+  .overlay:has(.cards:empty) .cards { display: none; }
+  .tool { font: inherit; font-size: 13px; color: var(--text); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 4px 10px; cursor: pointer; margin-left: 8px; }
   .hint { margin: 14px 0 0; color: var(--muted); font-size: 14px; }
   .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
   @media (max-width: 380px) { dl.stats dd { font-size: 17px; } dl.stats div { padding: 6px 8px; } }
@@ -59,26 +67,29 @@ h1,.overlay h2{font-family:var(--head);letter-spacing:-.02em}
   </nav>
 </div></header>
 <main>
-  <h1>Breakout</h1>
-  <p class="sub">Quebre todos os blocos sem deixar a bola cair.</p>
+  <h1>Breakout Roguelike</h1>
+  <p class="sub">Quebre blocos, monte sua build, derrote chefes e volte mais forte.</p>
 
   <dl class="stats">
     <div><dt>Pontuação</dt><dd id="score">0</dd></div>
     <div><dt>Vidas</dt><dd id="lives">3</dd></div>
-    <div><dt>Fase</dt><dd id="level">1/3</dd></div>
+    <div><dt>Fase</dt><dd id="level">1</dd></div>
+    <div><dt>Moedas</dt><dd id="coins">0</dd></div>
+    <div><dt>Combo</dt><dd id="combo">x1.0</dd></div>
     <div><dt>Recorde</dt><dd id="best">0</dd></div>
   </dl>
 
   <div class="stage">
-    <canvas id="game" role="img" aria-label="Área do jogo Breakout"></canvas>
+    <canvas id="game" role="img" aria-label="Área do jogo Breakout Roguelike"></canvas>
     <div class="overlay" id="overlay">
       <h2 id="ov-title">Breakout</h2>
-      <p id="ov-text">Mova a raquete com o mouse, o toque ou as setas.</p>
+      <p id="ov-text"></p>
+      <div class="cards" id="ov-body"></div>
       <button type="button" id="ov-btn">Jogar</button>
     </div>
   </div>
 
-  <p class="hint">Mova a raquete com o mouse, o toque ou as setas. Espaço lança a bola e P pausa.</p>
+  <p class="hint">Mova a raquete com mouse, toque ou setas. Espaço lança, P pausa, I abre o inventário.<button class="tool" id="inv" type="button">Inventário</button></p>
   <p class="sr-only" id="status" aria-live="polite"></p>
   <noscript>Este jogo precisa de JavaScript para funcionar.</noscript>
 </main>
@@ -87,428 +98,574 @@ h1,.overlay h2{font-family:var(--head);letter-spacing:-.02em}
 (() => {
   'use strict';
 
-  /* ---------- Constantes ---------- */
-  const W = 480, H = 600;          // tamanho lógico do jogo (o canvas escala para a tela)
-  const STEP = 1 / 240;            // passo fixo da física: movimento estável em qualquer taxa de quadros
-  const BALL_R = 6;
-  const PADDLE = { w: 84, h: 12, y: H - 36, speed: 560 };
-  const BRICK = { cols: 10, h: 20, gap: 4, side: 20, top: 64 };
+  /* ================= Constantes e utilitários ================= */
+  const W = 480, H = 600, STEP = 1 / 240, BR = 6;
+  const PAD = { w: 84, h: 12, y: H - 36, speed: 560 };
+  const BK = { cols: 10, h: 20, gap: 4, side: 20, top: 64 };
   const HUES = [356, 22, 44, 150, 200, 262];
   const FONT = '"DM Sans", system-ui, sans-serif';
-
-  // '#' = bloco, '2' = bloco resistente (2 batidas), '.' = vazio
+  // Fases 1-3 mantêm os layouts do jogo original ('#' bloco, dígito = resistência, '.' vazio)
   const LEVELS = [
-    [
-      '##########',
-      '##########',
-      '##########',
-      '##########',
-      '##########'
-    ],
-    [
-      '####..####',
-      '###....###',
-      '##########',
-      '#.#.##.#.#',
-      '##########',
-      '...####...'
-    ],
-    [
-      '2222222222',
-      '#.#.##.#.#',
-      '2#2#22#2#2',
-      '##########',
-      '2.2.22.2.2'
-    ]
+    ['##########', '##########', '##########', '##########', '##########'],
+    ['####..####', '###....###', '##########', '#.#.##.#.#', '##########', '...####...'],
+    ['2222222222', '#.#.##.#.#', '2#2#22#2#2', '##########', '2.2.22.2.2']
   ];
-
-  /* ---------- Elementos e utilitários ---------- */
   const $ = id => document.getElementById(id);
-  const canvas = $('game');
-  const ctx = canvas.getContext('2d');
-  const el = {
-    score: $('score'), lives: $('lives'), level: $('level'), best: $('best'),
-    overlay: $('overlay'), title: $('ov-title'), text: $('ov-text'), btn: $('ov-btn'),
-    status: $('status')
-  };
+  const canvas = $('game'), ctx = canvas.getContext('2d');
+  const el = { score: $('score'), lives: $('lives'), level: $('level'), coins: $('coins'), combo: $('combo'), best: $('best'),
+    overlay: $('overlay'), title: $('ov-title'), text: $('ov-text'), body: $('ov-body'), btn: $('ov-btn'), status: $('status') };
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  const pick = a => a[Math.random() * a.length | 0];
+  const dist = (a, b) => Math.hypot(a.x + a.w / 2 - b.x - b.w / 2, a.y + a.h / 2 - b.y - b.h / 2);
   const store = {
     get(k) { try { return localStorage.getItem(k); } catch { return null; } },
-    set(k, v) { try { localStorage.setItem(k, v); } catch { /* sem armazenamento: segue sem salvar */ } }
+    set(k, v) { try { localStorage.setItem(k, v); } catch { /* sem armazenamento */ } },
+    del(k) { try { localStorage.removeItem(k); } catch { /* idem */ } }
   };
 
-  /* ---------- Estado do jogo ---------- */
-  // mode: menu | ready | playing | paused | over | won
-  const s = {
-    mode: 'menu',
-    score: 0, lives: 3, level: 0,
-    best: Number(store.get('breakout:best')) || 0,
-    px: W / 2,
-    ball: { x: W / 2, y: PADDLE.y - BALL_R - 1, vx: 0, vy: 0, trail: [] },
-    bricks: [], particles: [], total: 0, cleared: 0
+  /* ================= Dados: bolas, itens, melhorias, chefes ================= */
+  const RAR = [{ n: 'Comum', c: '#9aa0a6', b: 30 }, { n: 'Raro', c: '#4aa3ff', b: 60 }, { n: 'Épico', c: '#b36bff', b: 110 }, { n: 'Lendário', c: '#ffb020', b: 200 }];
+  const BT = { // dmg e sp são multiplicadores
+    basic: { dmg: 1, sp: 1, c: null }, fire: { dmg: .9, sp: 1, c: '#ff6a3d' }, elec: { dmg: .8, sp: 1.05, c: '#ffd23f' },
+    toxic: { dmg: .8, sp: .95, c: '#9be564' }, ice: { dmg: .85, sp: .95, c: '#7dd3fc' }, sniper: { dmg: 2, sp: 1.3, c: '#f4f4f5' }
   };
+  const ITEMS = {};
+  const def = (id, t, r, max, n, d) => { ITEMS[id] = { id, t, r, max, n, d }; };
+  const TYPE = { ball: 'Bola', up: 'Upgrade', art: 'Artefato' };
+  def('fire', 'ball', 1, 5, 'Bola de Fogo', 'Incendeia blocos (dano contínuo). Derrete gelo: dano extra.');
+  def('elec', 'ball', 1, 5, 'Bola Elétrica', 'Raios saltam para blocos próximos. Níveis pares: +1 alvo.');
+  def('toxic', 'ball', 1, 5, 'Bola Tóxica', 'Acumula veneno (até 6) que corrói blocos.');
+  def('ice', 'ball', 1, 5, 'Bola Congelante', 'Congela blocos: recebem +50% de dano.');
+  def('sniper', 'ball', 2, 5, 'Bola Sniper', 'Rápida, dano ×2, atravessa blocos até tocar a raquete.');
+  def('dmg', 'up', 0, 5, 'Afiar', '+35% de dano de todas as bolas.');
+  def('wide', 'up', 0, 5, 'Raquete Larga', '+12% de largura da raquete.');
+  def('slow', 'up', 0, 4, 'Lastro', '−6% de velocidade das bolas.');
+  def('luck', 'up', 0, 5, 'Trevo', '+15% de moedas.');
+  def('heart', 'up', 1, 4, 'Coração', '+1 vida máxima e cura 1.');
+  def('crit', 'up', 1, 5, 'Olho Crítico', '+10% de chance de crítico (×2,5).');
+  def('extra', 'up', 2, 2, 'Bola Extra', '+1 bola básica em jogo.');
+  def('fuse', 'art', 0, 3, 'Pavio Curto', 'Blocos destruídos têm 8% de chance de explodir.');
+  def('midas', 'art', 1, 3, 'Toque de Midas', '+1 moeda por bloco; ouro rende +3.');
+  def('shield', 'art', 1, 3, 'Barreira Rúnica', '+1 salvamento da base por fase.');
+  def('conduit', 'art', 1, 3, 'Cristal Condutor', 'Raios elétricos atingem +1 alvo.');
+  def('ember', 'art', 1, 3, 'Brasas Eternas', 'Fogo dura mais e se espalha quando o bloco morre.');
+  def('venom', 'art', 2, 3, 'Presa Venenosa', 'Veneno se espalha ao matar e acumula mais.');
+  def('shatter', 'art', 2, 3, 'Geada Profunda', 'Blocos congelados sofrem mais dano (+50%/nível).');
+  def('metro', 'art', 2, 3, 'Metrônomo', 'O combo vale mais pontos e moedas.');
+  def('twin', 'art', 3, 2, 'Prisma Gêmeo', '12%/nível: rebater na raquete clona a bola.');
+  def('berserk', 'art', 3, 3, 'Fúria do Aprendiz', '+2%/nível de dano por bloco destruído na fase.');
+
+  const META = { // Fragmentos Arcanos: melhorias permanentes
+    hp: { n: 'Coração Arcano', d: '+1 vida inicial', max: 3, cost: l => 8 + l * 8 },
+    coin: { n: 'Bolso Fundo', d: '+25 moedas iniciais', max: 5, cost: l => 5 + l * 4 },
+    pad: { n: 'Raquete Rúnica', d: '+5% de largura', max: 4, cost: l => 6 + l * 5 },
+    dmg: { n: 'Lâmina Arcana', d: '+8% de dano', max: 5, cost: l => 8 + l * 6 },
+    shop: { n: 'Barganha', d: '−5% nos preços da loja', max: 5, cost: l => 7 + l * 5 },
+    frag: { n: 'Ressonância', d: '+15% de fragmentos', max: 4, cost: l => 10 + l * 8 },
+    start: { n: 'Bolsa de Brasas', d: 'Começa com Bola de Fogo', max: 1, cost: () => 25 }
+  };
+  const BOSS = [{ n: 'Sentinela', c: '#e5484d', m: 'spawn' }, { n: 'Prisma', c: '#a855f7', m: 'shoot' }, { n: 'Hidra', c: '#22a559', m: 'regen' }];
+  const MODN = { fast: 'Veloz', armor: 'Blindada', drop: 'Descendente', rich: 'Rica' };
+
+  /* ================= Persistência (localStorage) ================= */
+  const Save = {
+    d: { frag: 0, up: {}, best: 0, bestLv: 0, runs: 0 },
+    load() {
+      try { Object.assign(this.d, JSON.parse(store.get('brk:meta') || '{}')); } catch { /* dados inválidos */ }
+      this.d.best = Math.max(this.d.best, Number(store.get('breakout:best')) || 0);
+    },
+    save() { store.set('brk:meta', JSON.stringify(this.d)); store.set('breakout:best', String(this.d.best)); },
+    saveRun() { store.set('brk:run', JSON.stringify({ score: s.score, coins: s.coins, lives: s.lives, lv: s.lv, inv: s.inv, kills: s.kills, bosses: s.bosses })); },
+    getRun() { try { return JSON.parse(store.get('brk:run')); } catch { return null; } }
+  };
+  const ml = id => Save.d.up[id] || 0;
+
+  /* ================= Estado da partida ================= */
+  const s = { mode: 'screen', res: 'ready', px: W / 2, inv: {}, balls: [], bricks: [], particles: [], fx: [], shots: [], mods: [], boss: null,
+    score: 0, coins: 0, lives: 3, maxLives: 3, lv: 1, combo: 0, kills: 0, bosses: 0, lk: 0, cleared: 0, total: 1, shield: 0, stun: 0, time: 0, dropT: 9, stock: [], rr: 0, ev: null };
   const keys = { left: false, right: false };
-  let theme = {};
-  let acc = 0, last = 0;
+  let theme = {}, acc = 0, last = 0, S = {};
+  const I = id => s.inv[id] || 0;
+  const hasMod = m => s.mods.includes(m);
 
-  /* ---------- Tema ---------- */
+  function calc() { // atributos derivados do inventário + melhorias permanentes
+    S.dmg = (1 + .35 * I('dmg')) * (1 + .08 * ml('dmg'));
+    S.pad = PAD.w * (1 + .12 * I('wide')) * (1 + .05 * ml('pad'));
+    S.spd = Math.pow(.94, I('slow'));
+    S.coin = 1 + .15 * I('luck');
+    S.crit = .1 * I('crit');
+    s.maxLives = 3 + ml('hp') + I('heart');
+  }
+  const padW = () => S.pad * (s.stun > 0 ? .6 : 1);
+  const comboMul = () => 1 + s.combo * (.05 + .04 * I('metro'));
+  function give(id) { s.inv[id] = I(id) + 1; if (id === 'heart') s.lives++; calc(); hud(); }
+  const ownedBalls = () => Object.keys(BT).filter(k => k !== 'basic' && I(k)).length;
+
   function readTheme() {
-    const cs = getComputedStyle(document.documentElement);
-    const g = n => cs.getPropertyValue(n).trim();
-    const light = document.documentElement.dataset.theme === 'light';
-    theme = { surface: g('--surface'), text: g('--text'), muted: g('--muted'), accent: g('--accent'), light };
+    const cs = getComputedStyle(document.documentElement), g = n => cs.getPropertyValue(n).trim();
+    theme = { surface: g('--surface'), text: g('--text'), muted: g('--muted'), accent: g('--accent'), light: document.documentElement.dataset.theme === 'light' };
   }
   document.addEventListener('themechange', readTheme);
-  function brickColor(row) {
-    return `hsl(${HUES[row % HUES.length]} ${theme.light ? 68 : 60}% ${theme.light ? 48 : 60}%)`;
-  }
+  const brickColor = row => `hsl(${HUES[row % HUES.length]} ${theme.light ? 68 : 60}% ${theme.light ? 48 : 60}%)`;
 
-  /* ---------- Fases ---------- */
-  function loadLevel(i) {
-    const rows = LEVELS[i];
-    const bw = (W - BRICK.side * 2 - BRICK.gap * (BRICK.cols - 1)) / BRICK.cols;
-    s.bricks = [];
-    rows.forEach((row, r) => {
-      [...row].forEach((ch, c) => {
-        if (ch === '.') return;
-        const hp = ch === '2' ? 2 : 1;
-        s.bricks.push({
-          x: BRICK.side + c * (bw + BRICK.gap),
-          y: BRICK.top + r * (BRICK.h + BRICK.gap),
-          w: bw, h: BRICK.h, hp, maxHp: hp, row: r,
-          value: Math.max(10, 40 - r * 5) * hp
-        });
-      });
-    });
-    s.total = s.bricks.length;
-    s.cleared = 0;
-    s.particles = [];
-    resetBall();
-  }
-
-  function resetBall() {
-    s.ball = { x: s.px, y: PADDLE.y - BALL_R - 1, vx: 0, vy: 0, trail: [] };
-  }
-
-  // A bola acelera com a fase e conforme os blocos são destruídos
-  function speed() {
-    return 330 + s.level * 50 + (s.cleared / s.total) * 110;
-  }
-  function applySpeed() {
-    const b = s.ball, m = Math.hypot(b.vx, b.vy);
-    if (m > 0) { b.vx *= speed() / m; b.vy *= speed() / m; }
-  }
-
-  /* ---------- Interface ---------- */
+  /* ================= Interface: HUD e telas ================= */
   function hud() {
-    el.score.textContent = s.score;
-    el.lives.textContent = s.lives;
-    el.level.textContent = Math.min(s.level + 1, LEVELS.length) + '/' + LEVELS.length;
-    el.best.textContent = s.best;
+    el.score.textContent = s.score; el.lives.textContent = s.lives + '/' + s.maxLives;
+    el.level.textContent = s.lv + (s.lv % 5 === 0 ? ' ☠' : ''); el.coins.textContent = s.coins;
+    el.combo.textContent = 'x' + comboMul().toFixed(1); el.best.textContent = Math.max(Save.d.best, s.score);
   }
-  function say(msg) { el.status.textContent = msg; }
-  function showOverlay(title, text, label) {
-    el.title.textContent = title;
-    el.text.textContent = text;
-    el.btn.textContent = label;
-    el.overlay.hidden = false;
-    el.btn.focus({ preventScroll: true });
+  const say = m => { el.status.textContent = m; };
+  function itemCard(it, fn, price) {
+    const cur = I(it.id);
+    return { cls: it.r, fn, html: `<b style="color:${RAR[it.r].c}">${it.n}</b><small>${RAR[it.r].n} · ${TYPE[it.t]} · Nv ${cur} → ${cur + 1}/${it.max}${price != null ? ' · 🪙 ' + price : ''}</small><span>${it.d}</span>` };
   }
-  function hideOverlay() { el.overlay.hidden = true; }
-  function saveBest() {
-    if (s.score > s.best) { s.best = s.score; store.set('breakout:best', String(s.best)); return true; }
-    return false;
+  // Tela genérica: cartões clicáveis (ou informativos, sem fn) + botão principal
+  function screen(title, text, cards, btn, mode = 'screen') {
+    s.mode = mode;
+    el.title.textContent = title; el.text.textContent = text; el.body.replaceChildren();
+    for (const c of cards) {
+      const n = document.createElement(c.fn ? 'button' : 'div');
+      n.className = 'card'; n.innerHTML = c.html;
+      if (c.cls != null) n.style.setProperty('--rc', RAR[c.cls] ? RAR[c.cls].c : c.cls);
+      if (c.fn) { n.type = 'button'; n.disabled = !!c.off; n.onclick = c.fn; }
+      el.body.append(n);
+    }
+    el.btn.hidden = !btn;
+    if (btn) { el.btn.textContent = btn.l; el.btn.onclick = btn.fn; }
+    el.overlay.hidden = false; el.overlay.scrollTop = 0;
+    (el.body.querySelector('button:not(:disabled)') || el.btn).focus({ preventScroll: true });
+    say(title + '. ' + text);
+  }
+  const hide = () => { el.overlay.hidden = true; };
+
+  /* ---- Menu, meta-progressão e fim de partida ---- */
+  function menu() {
+    const run = Save.getRun(), c = [];
+    if (run) c.push({ cls: '#4aa3ff', fn: continueRun, html: `<b>Continuar partida</b><span>Fase ${run.lv + 1} · ${run.score} pts · ${run.coins} moedas</span>` });
+    c.push({ cls: '#b36bff', fn: metaScreen, html: '<b>Melhorias Permanentes</b><span>Gaste Fragmentos Arcanos ✦ para ficar mais forte.</span>' });
+    screen('Breakout Roguelike', `Recorde ${Save.d.best} · Fase máxima ${Save.d.bestLv} · ✦ ${Save.d.frag} Fragmentos`, c, { l: 'Nova partida', fn: newRun });
+  }
+  function metaScreen() {
+    const c = Object.entries(META).map(([id, m]) => {
+      const l = ml(id), mx = l >= m.max, cost = m.cost(l);
+      return { cls: '#b36bff', off: mx || Save.d.frag < cost, html: `<b>${m.n}</b><small>Nv ${l}/${m.max}</small><span>${m.d} — ${mx ? 'MÁXIMO' : '✦ ' + cost}</span>`,
+        fn() { Save.d.frag -= cost; Save.d.up[id] = l + 1; Save.save(); metaScreen(); } };
+    });
+    screen('Melhorias Permanentes', `Fragmentos Arcanos: ✦ ${Save.d.frag}`, c, { l: 'Voltar', fn: menu });
+  }
+  function runEnd() {
+    const frags = Math.max(1, Math.floor(((s.lv - 1) * 2 + s.bosses * 6 + s.kills / 50) * (1 + .15 * ml('frag'))));
+    const rec = s.score > Save.d.best;
+    Save.d.best = Math.max(Save.d.best, s.score); Save.d.bestLv = Math.max(Save.d.bestLv, s.lv);
+    Save.d.frag += frags; Save.d.runs++; Save.save(); store.del('brk:run'); hud();
+    screen('Fim da jornada', `Fase ${s.lv} · ${s.score} pontos${rec ? ' · Novo recorde!' : ''} · +✦ ${frags} Fragmentos Arcanos`,
+      [{ cls: '#b36bff', fn: metaScreen, html: '<b>Melhorias Permanentes</b><span>Invista seus fragmentos antes de recomeçar.</span>' }], { l: 'Nova partida', fn: newRun });
+  }
+  function invScreen() {
+    const items = Object.values(ITEMS).filter(i => I(i.id)).sort((a, b) => b.r - a.r);
+    const c = items.map(i => ({ cls: i.r, html: `<b style="color:${RAR[i.r].c}">${i.n}</b><small>${RAR[i.r].n} · ${TYPE[i.t]} · Nv ${I(i.id)}/${i.max}</small><span>${i.d}</span>` }));
+    if (!c.length) c.push({ html: '<span>Nenhum item ainda. Conclua fases para ganhar recompensas.</span>' });
+    screen('Inventário', `Dano ×${S.dmg.toFixed(2)} · Raquete ${Math.round(S.pad)}px · Crítico ${Math.round(S.crit * 100)}% · Escudo ${s.shield}`, c, { l: 'Continuar', fn: togglePause }, 'paused');
   }
 
-  /* ---------- Fluxo do jogo (máquina de estados) ---------- */
-  function newGame() {
-    s.score = 0; s.lives = 3; s.level = 0;
-    loadLevel(0);
-    s.mode = 'ready';
-    hideOverlay(); hud();
-    say('Fase 1. Toque ou pressione Espaço para lançar a bola.');
+  /* ---- Recompensas, loja, eventos ---- */
+  function offer(n, minR = 0, t) {
+    const w = [60 - s.lv * 2, 28 + s.lv, 10 + s.lv, 2 + s.lv * .5].map(x => Math.max(1, x));
+    let pool = Object.values(ITEMS).filter(i => I(i.id) < i.max && i.r >= minR && (!t || i.t === t) && !(i.t === 'ball' && !I(i.id) && ownedBalls() >= 4));
+    const out = [];
+    while (out.length < n && pool.length) {
+      let r = Math.random() * pool.reduce((a, i) => a + w[i.r], 0), it = pool[0];
+      for (const i of pool) { r -= w[i.r]; if (r <= 0) { it = i; break; } }
+      out.push(it); pool = pool.filter(i => i !== it);
+    }
+    return out;
   }
+  const price = it => Math.round(RAR[it.r].b * (1 + s.lv * .06) * (1 - .05 * ml('shop')));
+
+  function rewardScreen(bonus) {
+    const boss = s.lv % 5 === 0, opts = offer(3, boss ? 1 : 0);
+    screen(boss ? 'Chefe derrotado!' : 'Escolha uma melhoria', `Fase ${s.lv} concluída: +${bonus} moedas`,
+      opts.map(it => itemCard(it, () => { give(it.id); inter(); })), { l: 'Pular (+20 moedas)', fn: () => { s.coins += 20; hud(); inter(); } });
+  }
+  function inter() {
+    Save.saveRun();
+    if (s.stockLv !== s.lv) { s.stockLv = s.lv; s.rr = 0; s.stock = offer(4).map(it => ({ it })); } // gerado após a recompensa
+    const c = [{ cls: '#ffb020', fn: () => shopScreen(), html: '<b>🛒 Loja</b><span>Compre itens, recupere vidas e re-sorteie.</span>' }];
+    if (s.ev) c.push({ cls: '#b36bff', fn: evScreen, html: `<b>❓ ${s.ev.n}</b><span>Um encontro especial aguarda.</span>` });
+    screen(`Fase ${s.lv} concluída`, `Moedas: ${s.coins} · Vidas: ${s.lives}/${s.maxLives}`, c, { l: `Ir para a fase ${s.lv + 1}`, fn: () => { s.lv++; startLevel(); } });
+  }
+  function shopScreen(msg = '') {
+    const c = [];
+    for (const e of s.stock) if (!e.sold) { const p = price(e.it); c.push({ ...itemCard(e.it, () => { s.coins -= p; e.sold = 1; give(e.it.id); shopScreen('Comprado: ' + e.it.n); }, p), off: s.coins < p }); }
+    const hp = Math.round((40 + s.lv * 5) * (1 - .05 * ml('shop'))), rr = 12 + s.rr * 8;
+    c.push({ cls: '#e5484d', off: s.lives >= s.maxLives || s.coins < hp, fn() { s.coins -= hp; s.lives++; hud(); shopScreen('+1 vida'); }, html: `<b>❤ Recuperar vida</b><small>🪙 ${hp}</small>` });
+    c.push({ cls: '#9aa0a6', off: s.coins < rr, fn() { s.coins -= rr; s.rr++; s.stock = offer(4).map(it => ({ it })); shopScreen('Estoque renovado'); }, html: `<b>🔄 Re-sortear estoque</b><small>🪙 ${rr}</small>` });
+    screen('Loja', `Moedas: ${s.coins}. ${msg}`, c, { l: 'Voltar', fn: inter });
+  }
+  const EVENTS = [
+    { n: 'Altar de Sangue', d: 'Um altar oferece poder em troca de sangue.', o: () => [{ l: 'Sacrificar 1 vida → artefato raro ou melhor', off: s.lives < 2, fn() { s.lives--; const [it] = offer(1, 1, 'art'); if (it) give(it.id); done(it ? 'Você recebeu ' + it.n + '.' : 'O altar está vazio.'); } }] },
+    { n: 'Fonte Sagrada', d: 'Água cristalina brilha à sua frente.', o: () => [{ l: 'Beber: +1 vida', off: s.lives >= s.maxLives, fn() { s.lives++; done('Você se sente renovado.'); } }, { l: 'Pegar moedas: +35', fn() { s.coins += 35; done('Moedas no bolso.'); } }] },
+    { n: 'Apostador Sombrio', d: '"Dobro ou nada: 50% de chance."', o: () => [{ l: 'Apostar 40 moedas', off: s.coins < 40, fn() { if (Math.random() < .5) { s.coins += 40; done('Você ganhou! +40 moedas líquidas.'); } else { s.coins -= 40; done('Perdeu 40 moedas.'); } } }] },
+    { n: 'Forja Antiga', d: 'Aprimora gratuitamente um item que você possui.', o: () => [{ l: 'Forjar um item aleatório', off: !Object.values(ITEMS).some(i => I(i.id) && I(i.id) < i.max), fn() { const it = pick(Object.values(ITEMS).filter(i => I(i.id) && I(i.id) < i.max)); give(it.id); done(it.n + ' subiu de nível!'); } }] },
+    { n: 'Cofre Trancado', d: 'Abri-lo custa 50 moedas, mas guarda algo épico.', o: () => [{ l: 'Abrir (50 moedas)', off: s.coins < 50, fn() { s.coins -= 50; const [it] = offer(1, 2); if (it) give(it.id); done(it ? 'Dentro havia ' + it.n + '!' : 'Estava vazio.'); } }] }
+  ];
+  function evScreen() {
+    const e = s.ev;
+    screen(e.n, e.d, [...e.o().map(o => ({ cls: '#b36bff', off: o.off, fn: o.fn, html: `<b>${o.l}</b>` })), { cls: '#9aa0a6', fn: () => done('Você seguiu em frente.'), html: '<b>Ignorar</b>' }], null);
+  }
+  function done(msg) { s.ev = null; hud(); screen('Evento', msg, [], { l: 'Continuar', fn: inter }); }
+
+  /* ================= Geração procedural de fases ================= */
+  const PATS = [() => 1, (r, c) => (r + c) % 2 === 0, (r, c, R) => c >= R - 1 - r - 1, r => r % 2 === 0, (r, c) => c % 2 === 0,
+    (r, c, R) => r === 0 || r === R - 1 || c === 0, (r, c, R, n) => n, (r, c) => c + r > 1 && c + r < 7];
+
+  function startLevel() {
+    const L = s.lv, boss = L % 5 === 0, bw = (W - BK.side * 2 - BK.gap * (BK.cols - 1)) / BK.cols;
+    s.bricks = []; s.boss = null; s.mods = []; s.particles = []; s.fx = []; s.shots = []; s.ev = null;
+    if (!boss && L >= 3) { const m = Object.keys(MODN).sort(() => Math.random() - .5); s.mods = m.slice(0, L >= 8 ? 2 : Math.random() < .5 ? 1 : 0); }
+    let rows;
+    if (L <= 3) rows = LEVELS[L - 1];
+    else {
+      const R = boss ? 3 : Math.min(9, 4 + (L / 2 | 0)), pat = pick(PATS), nz = Array.from({ length: R }, () => Array.from({ length: 5 }, () => Math.random() < .75));
+      rows = [];
+      for (let r = 0; r < R; r++) {
+        let row = '';
+        for (let c = 0; c < 10; c++) {
+          const cm = Math.min(c, 9 - c);
+          if (!pat(r, cm, R, nz[r][cm])) { row += '.'; continue; }
+          const p = Math.random(), hp = 1 + Math.floor(Math.random() * Math.min(5, (L - 1) * .3 + 1) * (r < R / 2 ? 1.2 : .8)) + (hasMod('armor') ? 1 : 0);
+          row += !boss && p < Math.min(.1, .01 + L * .005) ? 's' : p < .1 ? 'x' : p < .15 ? 'g' : String(Math.min(9, hp));
+        }
+        rows.push(row);
+      }
+    }
+    if (!/[1-9xg]/.test(rows.join(''))) rows = ['##########', '##########'];
+    const y0 = BK.top + (boss ? 56 : 0);
+    rows.forEach((row, r) => [...row].forEach((ch, c) => {
+      if (ch === '.') return;
+      const kind = 'sxg'.includes(ch) ? ch : 'n', hp = /\d/.test(ch) ? +ch : kind === 'x' || kind === 'g' ? 2 : 1;
+      s.bricks.push(mkBrick(BK.side + c * (bw + BK.gap), y0 + r * (BK.h + BK.gap), bw, hp, r, kind));
+    }));
+    if (boss) {
+      const B = BOSS[((L / 5 - 1) % 3) | 0], hp = 40 + L * 7;
+      s.boss = { ...mkBrick(W / 2 - 55, BK.top, 110, hp, 0, 'b'), h: 34, value: 400 + L * 20, vx: 70, mech: B.m, bn: B.n, col: B.c, t: 0 };
+      s.bricks.push(s.boss);
+    }
+    s.total = Math.max(1, s.bricks.filter(k => k.kind !== 's').length); s.cleared = 0; s.lk = 0; s.combo = 0; s.stun = 0; s.dropT = 9;
+    s.shield = I('shield'); s.bw = bw;
+    mkBalls(); s.mode = 'ready'; hide(); hud();
+    say(`Fase ${L}${boss ? ', chefe ' + s.boss.bn : ''}. Toque ou pressione Espaço para lançar.`);
+  }
+  function mkBrick(x, y, w, hp, row, kind) {
+    return { x, y, w, h: BK.h, hp, maxHp: hp, row, kind, value: Math.max(10, 40 - row * 5) * hp, burn: 0, pois: 0, poisT: 0, frz: 0, tk: .5, hit: 0, fl: 0, dead: false };
+  }
+  function spawnRow(n, hp) { // chefes: reforços na primeira linha livre abaixo do chefe
+    const y = BK.top + 56;
+    for (let i = 0; i < n && s.bricks.length < 60; i++) {
+      const x = BK.side + (Math.random() * BK.cols | 0) * (s.bw + BK.gap);
+      if (s.bricks.some(k => Math.abs(k.x - x) < 1 && Math.abs(k.y - y) < 1)) continue;
+      s.bricks.push(mkBrick(x, y, s.bw, hp, 1, 'n')); s.total++;
+    }
+  }
+
+  /* ================= Bolas ================= */
+  function mkBalls() {
+    const t = ['basic', ...Object.keys(BT).filter(k => k !== 'basic' && I(k)), ...Array(I('extra')).fill('basic')].slice(0, 6);
+    s.balls = t.map((type, i) => ({ type, lv: Math.max(1, I(type)), x: s.px, y: PAD.y - BR - 1, vx: 0, vy: 0, trail: [], pierce: 0, ign: null, off: (i - (t.length - 1) / 2) * 15 }));
+  }
+  const pmax = b => b.type === 'sniper' ? b.lv : 0;
+  const spd = b => Math.min(640, 300 + s.lv * 10 + Math.min(1, s.cleared / s.total) * 70) * S.spd * BT[b.type].sp * (hasMod('fast') ? 1.15 : 1);
+  function applySpeed() { for (const b of s.balls) { const m = Math.hypot(b.vx, b.vy); if (m > 0) { b.vx *= spd(b) / m; b.vy *= spd(b) / m; } } }
   function launch() {
-    const a = Math.random() * 0.5 - 0.25;
-    const sp = speed();
-    s.ball.vx = sp * Math.sin(a);
-    s.ball.vy = -sp * Math.cos(a);
-    acc = 0;
-    s.mode = 'playing';
-    say('');
+    const n = s.balls.length;
+    s.balls.forEach((b, i) => {
+      const a = Math.random() * .4 - .2 + (i - (n - 1) / 2) * .12;
+      b.vx = spd(b) * Math.sin(a); b.vy = -spd(b) * Math.cos(a); b.pierce = pmax(b);
+    });
+    acc = 0; s.mode = 'playing'; say('');
+  }
+
+  /* ================= Combate: dano, efeitos de bola, destruição ================= */
+  function dmgBrick(k, d) {
+    if (k.dead || k.kind === 's') return;
+    k.hp -= d; k.hit = s.time; k.fl = .1;
+    if (k.hp <= .01) destroy(k);
+  }
+  function near(k, r) { return s.bricks.filter(o => o !== k && !o.dead && o.kind !== 's' && dist(o, k) < r); }
+  function aoe(k, r, d) { near(k, r).forEach(o => dmgBrick(o, d)); }
+
+  function hit(b, k) { // aplica o efeito da bola; todos os efeitos são aditivos e usam dmgBrick (sem reentrância de efeitos de bola)
+    if (k.kind === 's') return;
+    s.combo++;
+    const ty = b.type, L = b.lv;
+    let d = S.dmg * BT[ty].dmg * (1 + .02 * I('berserk') * Math.min(40, s.lk));
+    if (Math.random() < S.crit) d *= 2.5;
+    if (k.frz > 0) { d *= 1.5 + .5 * I('shatter'); if (ty === 'fire') { d += 1 + L; k.frz = 0; } }
+    if (ty === 'fire') k.burn = 2 + .5 * L + 1.5 * I('ember');
+    else if (ty === 'toxic') { k.pois = Math.min(6, k.pois + 1 + (L > 2 ? 1 : 0)); k.poisT = 4; }
+    else if (ty === 'ice') k.frz = (k.boss ? .8 : 1.4) + .3 * L;
+    else if (ty === 'elec') {
+      near(k, 130).sort((a, c) => dist(a, k) - dist(c, k)).slice(0, 2 + I('conduit') + (L >> 1)).forEach(o => {
+        s.fx.push({ x1: k.x + k.w / 2, y1: k.y + k.h / 2, x2: o.x + o.w / 2, y2: o.y + o.h / 2, life: .15 });
+        dmgBrick(o, d * .55 * (o.frz > 0 ? 1.5 : 1));
+      });
+    }
+    dmgBrick(k, d);
+    hud();
+  }
+  function destroy(k) {
+    if (k.dead) return;
+    k.dead = true;
+    const i = s.bricks.indexOf(k); if (i >= 0) s.bricks.splice(i, 1);
+    s.cleared++; s.kills++; s.lk++;
+    const m = comboMul();
+    s.score += Math.round(k.value * m);
+    const base = (1 + (k.kind === 'g' ? 4 : 0) + Math.floor(k.maxHp / 3) + I('midas') * (k.kind === 'g' ? 3 : 1)) * (hasMod('rich') ? 2 : 1);
+    s.coins += Math.max(1, Math.round(base * S.coin * (1 + .03 * s.combo * I('metro'))));
+    burst(k);
+    if (k.kind === 'x') aoe(k, 80, 2 + s.lv * .3);
+    if (Math.random() < .08 * I('fuse')) aoe(k, 60, 2);
+    if (k.burn > 0 && I('ember')) near(k, 80).forEach(o => { o.burn = Math.max(o.burn, 2); });
+    if (k.pois > 0 && I('venom')) near(k, 90).forEach(o => { o.pois = Math.min(6, o.pois + 1 + I('venom')); o.poisT = 4; });
+    if (k.boss) { // chefe derrotado: limpa reforços
+      s.bosses++; s.boss = null;
+      s.bricks.forEach(o => { o.dead = true; s.score += o.kind === 's' ? 0 : o.value; }); s.bricks = [];
+    }
+    applySpeed(); hud();
+  }
+  function stepStatus(dt) {
+    for (const k of [...s.bricks]) {
+      if (k.dead) continue;
+      if (k.fl > 0) k.fl -= dt;
+      if (k.frz > 0) k.frz -= dt;
+      if (k.poisT > 0 && (k.poisT -= dt) <= 0) k.pois = 0;
+      if (k.burn > 0) k.burn -= dt;
+      if (k.burn > 0 || k.pois > 0) {
+        k.tk -= dt;
+        if (k.tk <= 0) { k.tk += .5; if (k.burn > 0) dmgBrick(k, .4 * S.dmg); if (k.pois > 0) dmgBrick(k, .25 * k.pois * S.dmg); }
+      }
+    }
+  }
+
+  /* ================= Chefes, modificadores e projéteis ================= */
+  function stepWorld(dt) {
+    s.time += dt;
+    if (s.stun > 0) s.stun -= dt;
+    stepStatus(dt);
+    const B = s.boss;
+    if (B && !B.dead) {
+      const f = (B.frz > 0 ? .3 : 1) * (B.hp < B.maxHp * .35 ? 1.5 : 1);
+      B.x += B.vx * dt * f; B.t += dt * f;
+      if (B.x < 8) { B.x = 8; B.vx = Math.abs(B.vx); } else if (B.x + B.w > W - 8) { B.x = W - 8 - B.w; B.vx = -Math.abs(B.vx); }
+      if (B.mech === 'spawn' && B.t > 7) { B.t = 0; spawnRow(5, 1 + (s.lv / 6 | 0)); }
+      else if (B.mech === 'shoot' && B.t > 2.2) { B.t = 0; s.shots.push({ x: B.x + B.w / 2, y: B.y + B.h, vy: 190 }); }
+      else if (B.mech === 'regen') {
+        if (s.time - B.hit > 4) B.hp = Math.min(B.maxHp, B.hp + 3 * f * dt);
+        if (B.t > 9) { B.t = 0; spawnRow(3, 2 + (s.lv / 6 | 0)); }
+      }
+    }
+    for (let i = s.shots.length - 1; i >= 0; i--) {
+      const p = s.shots[i]; p.y += p.vy * dt;
+      if (p.y >= PAD.y && p.y < PAD.y + PAD.h + 8 && Math.abs(p.x - s.px) < padW() / 2 + 4) { s.stun = 3; s.combo = 0; s.shots.splice(i, 1); hud(); say('Raquete atordoada!'); }
+      else if (p.y > H) s.shots.splice(i, 1);
+    }
+    if (hasMod('drop') && (s.dropT -= dt) <= 0) { // modificador Descendente
+      s.dropT = 9;
+      s.bricks.forEach(k => { if (k.frz <= 0) k.y += 10; });
+      if (s.bricks.some(k => k.y + k.h > PAD.y - 60)) { s.bricks.forEach(k => { k.y -= 40; }); loseLife(); }
+    }
+    for (let i = s.fx.length - 1; i >= 0; i--) if ((s.fx[i].life -= dt) <= 0) s.fx.splice(i, 1);
+  }
+
+  /* ================= Física ================= */
+  function moveBall(b, dt) {
+    b.x += b.vx * dt; b.y += b.vy * dt;
+    if (b.x < BR) { b.x = BR; b.vx = Math.abs(b.vx); } else if (b.x > W - BR) { b.x = W - BR; b.vx = -Math.abs(b.vx); }
+    if (b.y < BR) { b.y = BR; b.vy = Math.abs(b.vy); }
+    const half = padW() / 2;
+    if (b.vy > 0 && b.y + BR >= PAD.y && b.y - BR <= PAD.y + PAD.h && b.x >= s.px - half - BR && b.x <= s.px + half + BR) {
+      const ang = clamp((b.x - s.px) / half, -1, 1) * (Math.PI / 3), sp = spd(b);
+      b.vx = sp * Math.sin(ang); b.vy = -sp * Math.cos(ang); b.y = PAD.y - BR;
+      b.pierce = pmax(b); b.ign = null; s.combo = 0; hud();
+      if (s.balls.length < 8 && Math.random() < .12 * I('twin')) s.balls.push({ ...b, trail: [], vx: -b.vx, off: 0 });
+    }
+    for (const k of s.bricks) {
+      const cx = clamp(b.x, k.x, k.x + k.w), cy = clamp(b.y, k.y, k.y + k.h), dx = b.x - cx, dy = b.y - cy;
+      const over = dx * dx + dy * dy <= BR * BR;
+      if (k === b.ign) { if (!over) b.ign = null; continue; }
+      if (!over) continue;
+      if (b.pierce > 0 && k.kind !== 's') { b.pierce--; b.ign = k; } // Sniper atravessa
+      else if (dx === 0 && dy === 0) b.vy = -b.vy;
+      else if (Math.abs(dx) > Math.abs(dy)) { b.vx = dx > 0 ? Math.abs(b.vx) : -Math.abs(b.vx); b.x = cx + Math.sign(dx) * BR; }
+      else { b.vy = dy > 0 ? Math.abs(b.vy) : -Math.abs(b.vy); b.y = cy + Math.sign(dy) * BR; }
+      hit(b, k);
+      break; // um bloco por passo evita inverter a direção duas vezes
+    }
+    if (b.y - BR > H) {
+      if (s.shield > 0) { s.shield--; b.y = H - BR; b.vy = -Math.abs(b.vy); s.fx.push({ x1: 0, y1: H - 2, x2: W, y2: H - 2, life: .25 }); }
+      else b.dead = true;
+    }
+  }
+  function step(dt) {
+    for (const b of s.balls) moveBall(b, dt);
+    if (s.balls.some(b => b.dead)) {
+      s.balls = s.balls.filter(b => !b.dead);
+      if (!s.balls.length && s.mode === 'playing') loseLife();
+    }
   }
   function loseLife() {
-    s.lives--;
+    s.lives--; s.combo = 0; s.stun = 0; s.shots = []; hud();
+    if (s.lives <= 0) { runEnd(); return; }
+    s.mode = 'ready'; mkBalls(); say('Você perdeu uma vida. Restam ' + s.lives + '.');
+  }
+  function clearLevel() {
+    s.mode = 'screen'; s.shots = [];
+    const bonus = 15 + s.lv * 4;
+    s.coins += bonus; s.score += 150 * s.lv;
+    Save.d.best = Math.max(Save.d.best, s.score); Save.d.bestLv = Math.max(Save.d.bestLv, s.lv); Save.save();
+    s.ev = (s.lv % 5 === 0 || Math.random() < .4) ? pick(EVENTS) : null;
     hud();
-    if (s.lives <= 0) {
-      const record = saveBest();
-      hud();
-      s.mode = 'over';
-      const msg = 'Pontuação final: ' + s.score + (record ? '. Novo recorde!' : '.');
-      say('Fim de jogo. ' + msg);
-      showOverlay('Fim de jogo', msg, 'Jogar de novo');
-    } else {
-      s.mode = 'ready';
-      resetBall();
-      say('Você perdeu uma vida. Restam ' + s.lives + '.');
-    }
+    if (s.lv % 2 === 1 || s.lv % 5 === 0) rewardScreen(bonus); else inter();
   }
-  function levelComplete() {
-    s.score += 100;
-    s.level++;
-    if (s.level >= LEVELS.length) {
-      const record = saveBest();
-      hud();
-      s.mode = 'won';
-      const msg = 'Pontuação final: ' + s.score + (record ? '. Novo recorde!' : '.');
-      say('Você venceu! ' + msg);
-      showOverlay('Você venceu!', msg, 'Jogar de novo');
-    } else {
-      loadLevel(s.level);
-      s.mode = 'ready';
-      hud();
-      say('Fase ' + (s.level + 1) + '. Toque ou pressione Espaço para lançar a bola.');
-    }
+
+  /* ================= Fluxo ================= */
+  function newRun(run) {
+    Object.assign(s, { inv: {}, score: 0, coins: 25 * ml('coin'), lv: 1, kills: 0, bosses: 0, px: W / 2 });
+    if (ml('start')) s.inv.fire = 1;
+    if (run && run.lv) Object.assign(s, run, { lv: run.lv + 1 });
+    calc();
+    if (!(run && run.lv)) s.lives = s.maxLives;
+    store.del('brk:run');
+    startLevel();
   }
+  const continueRun = () => newRun(Save.getRun());
   function togglePause() {
-    if (s.mode === 'playing') {
-      s.mode = 'paused';
-      showOverlay('Pausado', 'Sua partida continua de onde parou.', 'Continuar');
-    } else if (s.mode === 'paused') {
-      s.mode = 'playing';
-      hideOverlay();
-    }
+    if (s.mode === 'playing' || s.mode === 'ready') { s.res = s.mode; invScreen(); }
+    else if (s.mode === 'paused') { hide(); s.mode = s.res; acc = 0; }
   }
   function primaryAction() {
-    if (s.mode === 'menu' || s.mode === 'over' || s.mode === 'won') newGame();
-    else if (s.mode === 'ready') launch();
+    if (s.mode === 'ready') launch();
     else if (s.mode === 'paused') togglePause();
+    else if (s.mode === 'screen' && !el.btn.hidden) el.btn.click();
   }
 
-  /* ---------- Física ---------- */
-  function setPaddle(x) { s.px = clamp(x, PADDLE.w / 2, W - PADDLE.w / 2); }
-
+  /* ================= Desenho ================= */
   function burst(k) {
     if (reduceMotion) return;
     for (let i = 0; i < 8; i++) {
-      const a = Math.random() * Math.PI * 2, v = 60 + Math.random() * 120;
-      const life = 0.5 + Math.random() * 0.3;
-      s.particles.push({
-        x: k.x + k.w / 2, y: k.y + k.h / 2,
-        vx: Math.cos(a) * v, vy: Math.sin(a) * v - 40,
-        life, max: life, size: 3, color: brickColor(k.row)
-      });
+      const a = Math.random() * Math.PI * 2, v = 60 + Math.random() * 120, life = .5 + Math.random() * .3;
+      s.particles.push({ x: k.x + k.w / 2, y: k.y + k.h / 2, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 40, life, max: life, size: 3, color: brickColor(k.row) });
     }
   }
-
-  function step(dt) {
-    const b = s.ball;
-    b.x += b.vx * dt;
-    b.y += b.vy * dt;
-
-    // paredes laterais e teto
-    if (b.x < BALL_R) { b.x = BALL_R; b.vx = Math.abs(b.vx); }
-    else if (b.x > W - BALL_R) { b.x = W - BALL_R; b.vx = -Math.abs(b.vx); }
-    if (b.y < BALL_R) { b.y = BALL_R; b.vy = Math.abs(b.vy); }
-
-    // raquete: o ângulo de saída depende de onde a bola bate (até 60 graus)
-    const half = PADDLE.w / 2;
-    if (b.vy > 0 &&
-        b.y + BALL_R >= PADDLE.y && b.y - BALL_R <= PADDLE.y + PADDLE.h &&
-        b.x >= s.px - half - BALL_R && b.x <= s.px + half + BALL_R) {
-      const hit = clamp((b.x - s.px) / half, -1, 1);
-      const ang = hit * (Math.PI / 3);
-      const sp = speed();
-      b.vx = sp * Math.sin(ang);
-      b.vy = -sp * Math.cos(ang);
-      b.y = PADDLE.y - BALL_R;
-    }
-
-    // blocos: círculo contra retângulo; reflete no eixo de menor penetração
-    for (let i = 0; i < s.bricks.length; i++) {
-      const k = s.bricks[i];
-      const cx = clamp(b.x, k.x, k.x + k.w), cy = clamp(b.y, k.y, k.y + k.h);
-      const dx = b.x - cx, dy = b.y - cy;
-      if (dx * dx + dy * dy > BALL_R * BALL_R) continue;
-
-      if (dx === 0 && dy === 0) b.vy = -b.vy;
-      else if (Math.abs(dx) > Math.abs(dy)) {
-        b.vx = dx > 0 ? Math.abs(b.vx) : -Math.abs(b.vx);
-        b.x = cx + Math.sign(dx) * BALL_R;
-      } else {
-        b.vy = dy > 0 ? Math.abs(b.vy) : -Math.abs(b.vy);
-        b.y = cy + Math.sign(dy) * BALL_R;
-      }
-
-      k.hp--;
-      if (k.hp <= 0) {
-        s.bricks.splice(i, 1);
-        s.cleared++;
-        s.score += k.value;
-        burst(k);
-        applySpeed();
-        hud();
-        if (s.bricks.length === 0) { levelComplete(); return; }
-      } else {
-        s.score += 5;
-        hud();
-      }
-      break; // um bloco por passo evita inverter a direção duas vezes
-    }
-
-    if (b.y - BALL_R > H) loseLife();
-  }
-
   function stepParticles(dt) {
     for (let i = s.particles.length - 1; i >= 0; i--) {
       const p = s.particles[i];
-      p.life -= dt;
-      if (p.life <= 0) { s.particles.splice(i, 1); continue; }
-      p.vy += 600 * dt;
-      p.x += p.vx * dt;
-      p.y += p.vy * dt;
+      if ((p.life -= dt) <= 0) { s.particles.splice(i, 1); continue; }
+      p.vy += 600 * dt; p.x += p.vx * dt; p.y += p.vy * dt;
     }
   }
-
-  /* ---------- Desenho ---------- */
   function rr(x, y, w, h, r) {
-    ctx.beginPath();
-    ctx.moveTo(x + r, y);
-    ctx.arcTo(x + w, y, x + w, y + h, r);
-    ctx.arcTo(x + w, y + h, x, y + h, r);
-    ctx.arcTo(x, y + h, x, y, r);
-    ctx.arcTo(x, y, x + w, y, r);
+    ctx.beginPath(); ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r);
     ctx.closePath();
   }
-
+  function drawBrick(k) {
+    ctx.fillStyle = k.kind === 's' ? '#6b7280' : k.kind === 'x' ? '#ff8a3d' : k.kind === 'g' ? '#facc15' : k.kind === 'b' ? k.col : brickColor(k.row);
+    rr(k.x, k.y, k.w, k.h, k.kind === 'b' ? 8 : 4); ctx.fill();
+    if (k.frz > 0) { ctx.fillStyle = 'rgba(125,211,252,.6)'; rr(k.x, k.y, k.w, k.h, 4); ctx.fill(); }
+    if (k.fl > 0) { ctx.fillStyle = 'rgba(255,255,255,.55)'; rr(k.x, k.y, k.w, k.h, 4); ctx.fill(); }
+    if (k.burn > 0 || k.pois > 0) { ctx.lineWidth = 2; ctx.strokeStyle = k.burn > 0 ? '#ff4d1a' : '#7ddc3a'; rr(k.x + 1, k.y + 1, k.w - 2, k.h - 2, 3); ctx.stroke(); }
+    else if (k.kind === 'n' && k.maxHp > 1 && k.hp === k.maxHp && k.maxHp < 3) {
+      ctx.lineWidth = 2; ctx.strokeStyle = theme.light ? 'rgba(0,0,0,.55)' : 'rgba(255,255,255,.75)'; rr(k.x + 3, k.y + 3, k.w - 6, k.h - 6, 2); ctx.stroke();
+    }
+    ctx.textAlign = 'center'; ctx.fillStyle = k.kind === 'g' || k.kind === 'x' ? '#2b2100' : '#fff'; ctx.font = `700 11px ${FONT}`;
+    const t = k.kind === 'b' ? k.bn : k.kind === 's' ? '' : (k.kind === 'x' ? '✸' : k.kind === 'g' ? '$' : '') + (k.hp > 1 || k.maxHp > 2 ? Math.ceil(k.hp) : '');
+    if (t) ctx.fillText(t, k.x + k.w / 2, k.y + k.h / 2 + 4);
+  }
   function render() {
-    ctx.clearRect(0, 0, W, H);
-    ctx.fillStyle = theme.surface;
-    ctx.fillRect(0, 0, W, H);
-
-    for (const k of s.bricks) {
-      ctx.fillStyle = brickColor(k.row);
-      rr(k.x, k.y, k.w, k.h, 4);
-      ctx.fill();
-      if (k.maxHp > 1 && k.hp === k.maxHp) {       // bloco resistente ainda intacto
-        ctx.lineWidth = 2;
-        ctx.strokeStyle = theme.light ? 'rgba(0,0,0,.55)' : 'rgba(255,255,255,.75)';
-        rr(k.x + 3, k.y + 3, k.w - 6, k.h - 6, 2);
-        ctx.stroke();
-      }
+    ctx.clearRect(0, 0, W, H); ctx.fillStyle = theme.surface; ctx.fillRect(0, 0, W, H);
+    s.bricks.forEach(drawBrick);
+    if (s.boss && !s.boss.dead) { // barra de vida do chefe
+      ctx.fillStyle = 'rgba(128,128,128,.3)'; ctx.fillRect(20, 28, W - 40, 6);
+      ctx.fillStyle = s.boss.col; ctx.fillRect(20, 28, (W - 40) * Math.max(0, s.boss.hp / s.boss.maxHp), 6);
     }
-
-    for (const p of s.particles) {
-      ctx.globalAlpha = Math.max(0, p.life / p.max);
-      ctx.fillStyle = p.color;
-      ctx.fillRect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size);
-    }
+    for (const p of s.particles) { ctx.globalAlpha = Math.max(0, p.life / p.max); ctx.fillStyle = p.color; ctx.fillRect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size); }
     ctx.globalAlpha = 1;
-
-    ctx.fillStyle = theme.text;
-    rr(s.px - PADDLE.w / 2, PADDLE.y, PADDLE.w, PADDLE.h, 6);
-    ctx.fill();
-
-    if (s.mode !== 'over' && s.mode !== 'won') {
-      const b = s.ball, n = b.trail.length;
-      ctx.fillStyle = theme.accent;
-      for (let i = 0; i < n; i++) {
-        const t = (i + 1) / n;
-        ctx.globalAlpha = t * 0.3;
-        ctx.beginPath();
-        ctx.arc(b.trail[i].x, b.trail[i].y, BALL_R * (0.4 + 0.6 * t), 0, Math.PI * 2);
-        ctx.fill();
-      }
-      ctx.globalAlpha = 1;
-      ctx.beginPath();
-      ctx.arc(b.x, b.y, BALL_R, 0, Math.PI * 2);
-      ctx.fill();
+    ctx.strokeStyle = '#ffd23f'; ctx.lineWidth = 2;
+    for (const f of s.fx) { ctx.globalAlpha = Math.min(1, f.life * 8); ctx.beginPath(); ctx.moveTo(f.x1, f.y1); ctx.lineTo(f.x2, f.y2); ctx.stroke(); }
+    ctx.globalAlpha = 1; ctx.fillStyle = '#e5484d';
+    for (const p of s.shots) { ctx.beginPath(); ctx.arc(p.x, p.y, 5, 0, 7); ctx.fill(); }
+    if (s.shield > 0) { ctx.fillStyle = '#7dd3fc'; ctx.fillRect(0, H - 4, W, 3); }
+    ctx.fillStyle = s.stun > 0 ? '#e5484d' : theme.text;
+    rr(s.px - padW() / 2, PAD.y, padW(), PAD.h, 6); ctx.fill();
+    for (const b of s.balls) {
+      ctx.fillStyle = BT[b.type].c || theme.accent;
+      const n = b.trail.length;
+      for (let i = 0; i < n; i++) { const t = (i + 1) / n; ctx.globalAlpha = t * .3; ctx.beginPath(); ctx.arc(b.trail[i].x, b.trail[i].y, BR * (.4 + .6 * t), 0, 7); ctx.fill(); }
+      ctx.globalAlpha = 1; ctx.beginPath(); ctx.arc(b.x, b.y, BR, 0, 7); ctx.fill();
     }
-
     if (s.mode === 'ready') {
-      ctx.textAlign = 'center';
-      ctx.fillStyle = theme.text;
-      ctx.font = `600 22px ${FONT}`;
-      ctx.fillText('Fase ' + (s.level + 1), W / 2, H * 0.62);
-      ctx.fillStyle = theme.muted;
-      ctx.font = `500 14px ${FONT}`;
-      ctx.fillText('Toque ou pressione Espaço para lançar', W / 2, H * 0.62 + 26);
+      ctx.textAlign = 'center'; ctx.fillStyle = theme.text; ctx.font = `600 22px ${FONT}`;
+      ctx.fillText('Fase ' + s.lv + (s.boss ? ' · ' + s.boss.bn : ''), W / 2, H * .62);
+      ctx.fillStyle = theme.muted; ctx.font = `500 14px ${FONT}`;
+      if (s.mods.length) ctx.fillText('Modificadores: ' + s.mods.map(m => MODN[m]).join(', '), W / 2, H * .62 + 24);
+      ctx.fillText('Toque ou pressione Espaço para lançar', W / 2, H * .62 + (s.mods.length ? 46 : 24));
     }
   }
 
-  /* ---------- Tela, entrada e laço principal ---------- */
+  /* ================= Tela, entrada e laço principal ================= */
   function fit() {
-    const r = canvas.getBoundingClientRect();
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    canvas.width = Math.max(1, Math.round(r.width * dpr));
-    canvas.height = Math.max(1, Math.round(r.height * dpr));
+    const r = canvas.getBoundingClientRect(), dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.max(1, Math.round(r.width * dpr)); canvas.height = Math.max(1, Math.round(r.height * dpr));
     ctx.setTransform(canvas.width / W, 0, 0, canvas.height / H, 0, 0);
   }
   new ResizeObserver(fit).observe(canvas);
-
-  const pointerX = e => {
-    const r = canvas.getBoundingClientRect();
-    return (e.clientX - r.left) / r.width * W;
-  };
+  const setPaddle = x => { s.px = clamp(x, padW() / 2, W - padW() / 2); };
+  const pointerX = e => { const r = canvas.getBoundingClientRect(); return (e.clientX - r.left) / r.width * W; };
   canvas.addEventListener('pointermove', e => setPaddle(pointerX(e)));
   canvas.addEventListener('pointerdown', e => {
     setPaddle(pointerX(e));
     if (canvas.setPointerCapture) canvas.setPointerCapture(e.pointerId);
     if (s.mode === 'ready') launch();
   });
-
   window.addEventListener('keydown', e => {
-    const onButton = e.target.tagName === 'BUTTON';
-    const k = e.key;
+    const onButton = e.target.tagName === 'BUTTON', k = e.key;
     if (k === 'ArrowLeft' || k === 'a' || k === 'A') { keys.left = true; if (!onButton) e.preventDefault(); }
     else if (k === 'ArrowRight' || k === 'd' || k === 'D') { keys.right = true; if (!onButton) e.preventDefault(); }
-    else if (k === ' ' || k === 'Enter') {
-      if (onButton) return;            // o botão do overlay já trata Espaço/Enter
-      e.preventDefault();
-      primaryAction();
-    }
-    else if (k === 'p' || k === 'P' || k === 'Escape') togglePause();
+    else if (k === ' ' || k === 'Enter') { if (onButton) return; e.preventDefault(); primaryAction(); }
+    else if (k === 'p' || k === 'P' || k === 'Escape' || k === 'i' || k === 'I') togglePause();
   });
   window.addEventListener('keyup', e => {
     const k = e.key;
     if (k === 'ArrowLeft' || k === 'a' || k === 'A') keys.left = false;
     else if (k === 'ArrowRight' || k === 'd' || k === 'D') keys.right = false;
   });
-  el.btn.addEventListener('click', primaryAction);
-  document.addEventListener('visibilitychange', () => { if (document.hidden) togglePause(); });
+  $('inv').addEventListener('click', togglePause);
+  document.addEventListener('visibilitychange', () => { if (document.hidden && (s.mode === 'playing' || s.mode === 'ready')) togglePause(); });
 
   function frame(t) {
     requestAnimationFrame(frame);
-    const dt = Math.min((t - last) / 1000, 0.05);
-    last = t;
-
-    if (s.mode !== 'paused') {
+    const dt = Math.min((t - last) / 1000, .05); last = t;
+    if (s.mode === 'playing' || s.mode === 'ready') {
       const dir = (keys.right ? 1 : 0) - (keys.left ? 1 : 0);
-      if (dir) setPaddle(s.px + dir * PADDLE.speed * dt);
+      if (dir) setPaddle(s.px + dir * PAD.speed * dt); else setPaddle(s.px);
       stepParticles(dt);
     }
-
-    if (s.mode === 'ready' || s.mode === 'menu') {
-      s.ball.x = s.px;
-      s.ball.y = PADDLE.y - BALL_R - 1;
-      s.ball.trail.length = 0;
-    } else if (s.mode === 'playing') {
+    if (s.mode === 'ready') s.balls.forEach(b => { b.x = clamp(s.px + b.off, BR, W - BR); b.y = PAD.y - BR - 1; b.trail.length = 0; });
+    else if (s.mode === 'playing') {
+      stepWorld(dt);
       acc += dt;
       while (acc >= STEP && s.mode === 'playing') { step(STEP); acc -= STEP; }
-      if (!reduceMotion && s.mode === 'playing') {
-        s.ball.trail.push({ x: s.ball.x, y: s.ball.y });
-        if (s.ball.trail.length > 8) s.ball.trail.shift();
+      if (s.mode === 'playing') {
+        if (!reduceMotion) for (const b of s.balls) { b.trail.push({ x: b.x, y: b.y }); if (b.trail.length > 8) b.trail.shift(); }
+        if (!s.bricks.some(k => k.kind !== 's')) clearLevel();
       }
     }
     render();
   }
 
-  readTheme();
-  loadLevel(0);
-  hud();
-  showOverlay('Breakout', 'Mova a raquete com o mouse, o toque ou as setas.', 'Jogar');
-  fit();
+  Save.load(); calc(); readTheme(); hud(); fit(); menu();
   requestAnimationFrame(frame);
 })();
 </script>
